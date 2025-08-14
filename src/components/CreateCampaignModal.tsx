@@ -7,7 +7,6 @@ import { useAuth } from '../hooks/useAuth';
 import { irishCounties } from '../data/counties';
 import { packOrderService } from '../services/packOrderService';
 import { emailService } from '../services/emailService';
-import { supabase } from '../lib/supabase';
 
 interface CreateCampaignModalProps {
   onClose: () => void;
@@ -353,149 +352,116 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
 
           <form onSubmit={handleAuthSubmit} className="space-y-4">
             {authMode === 'signup' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <User className="inline h-4 w-4 mr-1" />
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={authData.fullName}
-                    onChange={(e) => setAuthData({ ...authData, fullName: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="inline h-4 w-4 mr-1" />
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={authData.email}
-                    onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="inline h-4 w-4 mr-1" />
-                    Confirm Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={authData.confirmEmail}
-                    onChange={(e) => setAuthData({ ...authData, confirmEmail: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Confirm your email address"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <MapPin className="inline h-4 w-4 mr-1" />
-                      County *
-                    </label>
-                    <select
-                      required
-                      value={authData.county}
-                      onChange={(e) => setAuthData({ ...authData, county: e.target.value })}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    >
-                      {irishCounties.map((county) => (
-                        <option key={county} value={county}>{county}</option>
-                      ))}
-                    </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <User className="inline h-4 w-4 mr-1" />
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={authData.fullName}
+                  onChange={(e) => setAuthData({ ...authData, fullName: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your full name"
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Eircode (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={authData.eircode}
-                      onChange={(e) => setAuthData({ ...authData, eircode: e.target.value.toUpperCase() })}
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="A65 F4E2"
-                      maxLength={8}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={authData.password}
-                    onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter your password"
-                    minLength={6}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={authData.confirmPassword}
-                    onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Confirm your password"
-                    minLength={6}
-                  />
-                </div>
-              </>
+              </div>
             )}
 
-            {authMode === 'signin' && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="inline h-4 w-4 mr-1" />
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={authData.email}
-                    onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Mail className="inline h-4 w-4 mr-1" />
+                Email Address *
+              </label>
+              <input
+                type="email"
+                required
+                value={authData.email}
+                onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="your.email@example.com"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={authData.password}
-                    onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter your password"
-                    minLength={6}
-                  />
-                </div>
-              </>
+            {authMode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Mail className="inline h-4 w-4 mr-1" />
+                  Confirm Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={authData.confirmEmail}
+                  onChange={(e) => setAuthData({ ...authData, confirmEmail: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Confirm your email address"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password *
+              </label>
+              <input
+                type="password"
+                required
+                value={authData.password}
+                onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter your password"
+                minLength={6}
+              />
+            </div>
+
+            {authMode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={authData.confirmPassword}
+                  onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Confirm your password"
+                  minLength={6}
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password *
+              </label>
+              <input
+                type="password"
+                required
+                value={authData.password}
+                onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Enter your password"
+                minLength={6}
+              />
+            </div>
+
+            {authMode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={authData.confirmPassword}
+                  onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Confirm your password"
+                  minLength={6}
+                />
+              </div>
             )}
 
             <button
@@ -578,6 +544,38 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
                 className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 placeholder="your.email@example.com"
               />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  County *
+                </label>
+                <select
+                  required
+                  value={authData.county || 'Cork'}
+                  onChange={(e) => setAuthData({ ...authData, county: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  {irishCounties.map((county) => (
+                    <option key={county} value={county}>{county}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Eircode (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={authData.eircode || ''}
+                  onChange={(e) => setAuthData({ ...authData, eircode: e.target.value.toUpperCase() })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="A65 F4E2"
+                  maxLength={8}
+                />
+              </div>
             </div>
           </div>
 
@@ -898,37 +896,6 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
                     }`}
                   >
                     {selectedPack === pack.id ? 'Selected' : 'Select This Pack'}
-                  </label>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {selectedPack !== 'free' && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <h4 className="font-medium text-amber-900 mb-3">T-Shirt Sizes</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Array.from({ length: selectedPack === 'medium' ? 2 : 4 }, (_, i) => (
-                  <div key={i}>
-                    <label className="block text-sm font-medium text-amber-800 mb-1">
-                      T-Shirt {i + 1}
-                    </label>
-                    <select
-                      value={tshirtSizes[`shirt_${i + 1}` as keyof typeof tshirtSizes]}
-                      onChange={(e) => setTshirtSizes({
-                        ...tshirtSizes,
-                        [`shirt_${i + 1}`]: e.target.value
-                      })}
-                      className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    >
-                      {tshirtSizes.map((size) => (
-                        <option key={size} value={size}>{size}</option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
         </div>
       );
@@ -941,9 +908,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
           <div className="text-center mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-2">Shipping Information</h3>
             <p className="text-gray-600">Where should we send your Coffee Morning pack?</p>
-          </div>
+                  </div>
 
-          <div>
+                  <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Full Name *
             </label>
@@ -1246,6 +1213,40 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
                 disabled={!canProceed()}
                 className="bg-green-700 text-white px-6 py-3 rounded-xl hover:bg-green-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
               >
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <MapPin className="inline h-4 w-4 mr-1" />
+                      County *
+                    </label>
+                    <select
+                      required
+                      value={authData.county}
+                      onChange={(e) => setAuthData({ ...authData, county: e.target.value })}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      {irishCounties.map((county) => (
+                        <option key={county} value={county}>{county}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Eircode (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={authData.eircode}
+                      onChange={(e) => setAuthData({ ...authData, eircode: e.target.value.toUpperCase() })}
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="A65 F4E2"
+                      maxLength={8}
+                    />
+                  </div>
                 {currentStep === totalSteps - 1 ? 'Create Campaign & Continue' : 'Continue'}
               </button>
             )}
