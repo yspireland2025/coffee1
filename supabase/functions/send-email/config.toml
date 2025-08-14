@@ -1,0 +1,11 @@
+# config.toml
+# This file configures the Deno runtime for the send-email Edge Function.
+
+# Deno permissions required for this function.
+# --allow-net: Allows network access for connecting to the SMTP server.
+# --allow-env: Allows access to environment variables (e.g., SMTP credentials).
+main = "index.ts"
+exclude = []
+service_path = "./"
+entrypoint = "index.ts"
+deno_args = ["--allow-net", "--allow-env"]
