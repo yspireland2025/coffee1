@@ -1,0 +1,83 @@
+import React from 'react';
+import { User, Mail, Target } from 'lucide-react';
+import { CampaignFormData } from '../types';
+
+interface BasicInfoStepProps {
+  formData: CampaignFormData;
+  setFormData: (data: CampaignFormData) => void;
+}
+
+export default function BasicInfoStep({ formData, setFormData }: BasicInfoStepProps) {
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Tell Us About Your Coffee Morning</h3>
+        <p className="text-gray-600">Share your story and inspire others to support your cause</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          <Target className="inline h-4 w-4 mr-1" />
+          Campaign Title *
+        </label>
+        <input
+          type="text"
+          required
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="e.g., Sarah's Coffee Morning for Hope"
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <User className="inline h-4 w-4 mr-1" />
+            Your Name *
+          </label>
+          <input
+            type="text"
+            required
+            value={formData.organizer}
+            onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            placeholder="Your full name"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Mail className="inline h-4 w-4 mr-1" />
+            Email Address *
+          </label>
+          <input
+            type="email"
+            required
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            placeholder="your.email@example.com"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Your Story *
+        </label>
+        <textarea
+          required
+          rows={4}
+          value={formData.story}
+          onChange={(e) => setFormData({ ...formData, story: e.target.value })}
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Tell people why this cause matters to you. Personal stories create stronger connections.
+        </p>
+      </div>
+    </div>
+  );
+}

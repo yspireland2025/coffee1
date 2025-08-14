@@ -1,510 +1,1233 @@
-import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import Hero from './components/Hero';
-import CampaignCard from './components/CampaignCard';
-import CampaignDetail from './components/CampaignDetail';
-import DonationModal from './components/DonationModal';
-import CreateCampaignModal from './components/CreateCampaignModal';
-import AuthModal from './components/AuthModal';
-import AboutSection from './components/AboutSection';
-import CampaignsPage from './components/CampaignsPage';
-import MyCampaignsModal from './components/MyCampaignsModal';
-import AdminLogin from './components/admin/AdminLogin';
-import AdminDashboard from './components/admin/AdminDashboard';
-import { useAuth } from './hooks/useAuth';
-import { useAdmin } from './hooks/useAdmin';
-import { useCampaigns } from './hooks/useCampaigns';
-import { campaignService } from './services/campaignService';
-import { Campaign } from './types';
+import React, { useState } from 'react';
+import { X, User, Mail, MapPin, Calendar, Clock, Target, Image, Share2, Package, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
+import { Elements } from '@stripe/react-stripe-js';
+import { stripePromise } from '../lib/stripe';
+import PackPaymentForm from './PackPaymentForm';
+import { useAuth } from '../hooks/useAuth';
+import { irishCounties } from '../data/counties';
+import { packOrderService } from '../services/packOrderService';
+import { emailService } from '../services/emailService';
 
-function App() {
-  console.log('App component rendering');
-  
-  const { user } = useAuth();
-  const { adminUser, adminLogin, adminLogout, loading: adminLoading } = useAdmin();
-  const { campaigns, loading: campaignsLoading, error: campaignsError } = useCampaigns();
-  
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [showCampaignDetail, setShowCampaignDetail] = useState(false);
-  const [showDonationModal, setShowDonationModal] = useState(false);
-  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [showCampaignsPage, setShowCampaignsPage] = useState(false);
-  const [showMyCampaigns, setShowMyCampaigns] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
+interface CreateCampaignModalProps {
+  onClose: () => void;
+  onSubmit: (campaignData: any) => Promise<any>;
+}
 
-  // Check URL hash for admin access
-  useEffect(() => {
-    const checkAdminHash = () => {
-      if (window.location.hash === '#admin') {
-        setShowAdminLogin(true);
-      }
-    };
-    
-    checkAdminHash();
-    window.addEventListener('hashchange', checkAdminHash);
-    
-    return () => {
-      window.removeEventListener('hashchange', checkAdminHash);
-    };
-  }, []);
+interface PackOption {
+  id: 'free' | 'medium' | 'large';
+  name: string;
+  price: number;
+  description: string;
+  items: string[];
+  popular?: boolean;
+}
 
-  // Listen for custom events
-  useEffect(() => {
-    const handleOpenAuth = (event: CustomEvent) => {
-      setAuthMode(event.detail.mode);
-      setShowAuth(true);
-    };
+const packOptions: PackOption[] = [
+  {
+    id: 'free',
+    name: 'Free Starter Pack',
+    price: 10, // Just postage
+    description: 'Everything you need to get started',
+    items: [
+      'Event planning guide',
+      'Promotional posters',
+      'Information leaflets',
+      'Donation collection materials',
+      'Social media templates'
+    ],
+    popular: true
+  },
+  {
+    id: 'medium',
+    name: 'Medium Pack',
+    price: 35, // €25 + €10 postage
+    description: 'Enhanced materials for bigger events',
+    items: [
+      'Everything in Free Pack',
+      '2 YSPI branded t-shirts',
+      'Table banners',
+      'Recipe cards for coffee treats',
+      'Thank you cards for donors'
+    ]
+  },
+  {
+    id: 'large',
+    name: 'Large Pack',
+    price: 60, // €50 + €10 postage
+    description: 'Complete kit for community events',
+    items: [
+      'Everything in Medium Pack',
+      '4 YSPI branded t-shirts',
+      'Large event banner',
+      'Coffee morning games pack',
+      'Professional photo props',
+      'Certificate of appreciation'
+    ]
+  }
+];
 
-    const handleShowCampaignsPage = () => {
-      setShowCampaignsPage(true);
-    };
+const tshirtSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-    window.addEventListener('openAuth', handleOpenAuth as EventListener);
-    window.addEventListener('showCampaignsPage', handleShowCampaignsPage);
-
-    return () => {
-      window.removeEventListener('openAuth', handleOpenAuth as EventListener);
-      window.removeEventListener('showCampaignsPage', handleShowCampaignsPage);
-    };
-  }, []);
-
-  // Handle my campaigns modal
-  useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash === '#my-campaigns') {
-        setShowMyCampaigns(true);
-      }
-    };
-
-    handleHashChange(); // Check initial hash
-    window.addEventListener('hashchange', handleHashChange);
-
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
-  const handleViewCampaign = (campaign: Campaign) => {
-    setSelectedCampaign(campaign);
-    setShowCampaignDetail(true);
-  };
-
-  const handleDonate = (campaign: Campaign) => {
-    setSelectedCampaign(campaign);
-    setShowDonationModal(true);
-  };
-
-  const handleCreateCampaign = () => {
-    setShowCreateCampaign(true);
-  };
-
-  const handleCampaignSubmit = async (campaignData: any) => {
-    try {
-      console.log('Creating campaign with data:', campaignData);
-      const createdCampaign = await campaignService.createCampaign(campaignData, user?.id);
-      console.log('Campaign created successfully');
-      return createdCampaign; // Return the created campaign object with its ID
-    } catch (error) {
-      console.error('Error creating campaign:', error);
-      throw error;
+export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaignModalProps) {
+  const { user, signUp, signIn } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    title: '',
+    organizer: '',
+    email: '',
+    county: 'Cork',
+    eircode: '',
+    story: '',
+    goalAmount: '',
+    eventDate: '',
+    eventTime: '',
+    location: '',
+    image: '',
+    socialLinks: {
+      facebook: '',
+      twitter: '',
+      instagram: '',
+      whatsapp: ''
     }
-  };
+  });
 
-  const handleDonationSubmit = async (donationData: any) => {
+  // Auth state for step 1
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
+  const [authData, setAuthData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+    confirmEmail: '',
+    county: 'Cork',
+    eircode: ''
+  });
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+
+  // Pack selection state
+  const [selectedPack, setSelectedPack] = useState<'free' | 'medium' | 'large'>('free');
+  const [shippingAddress, setShippingAddress] = useState({
+    name: '',
+    address_line_1: '',
+    address_line_2: '',
+    city: '',
+    county: 'Cork',
+    eircode: '',
+    country: 'Ireland'
+  });
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [tshirtSizes, setTshirtSizes] = useState({
+    shirt_1: 'M',
+    shirt_2: 'M',
+    shirt_3: 'M',
+    shirt_4: 'M'
+  });
+
+  // Payment state
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [createdCampaign, setCreatedCampaign] = useState<any>(null);
+  const [createdPackOrder, setCreatedPackOrder] = useState<any>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  const totalSteps = user ? 6 : 7; // 7 steps if not authenticated, 6 if authenticated
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+
     try {
-      await campaignService.createDonation(donationData);
-      return true;
-    } catch (error) {
-      console.error('Error processing donation:', error);
-      return false;
-    }
-  };
-
-  // Show admin dashboard if admin is logged in
-  if (adminUser && !adminLoading) {
-    return <AdminDashboard onLogout={adminLogout} />;
-  }
-
-  // Show admin login if requested
-  if (showAdminLogin && !adminUser) {
-    return (
-      <AdminLogin 
-        onLogin={async (credentials) => {
-          const success = await adminLogin(credentials);
-          if (success) {
-            setShowAdminLogin(false);
-            window.location.hash = '';
-          }
-          return success;
-        }}
-      />
-    );
-  }
-
-  // Show campaigns page
-  if (showCampaignsPage) {
-    return (
-      <CampaignsPage
-        campaigns={campaigns}
-        onBack={() => setShowCampaignsPage(false)}
-      />
-    );
-  }
-
-  // Main application
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header 
-        onCreateCampaign={handleCreateCampaign}
-        showMyCampaigns={showMyCampaigns}
-        setShowMyCampaigns={setShowMyCampaigns}
-      />
-      
-      <main>
-        <Hero onCreateCampaign={handleCreateCampaign} />
+      if (authMode === 'signup') {
+        if (authData.email !== authData.confirmEmail) {
+          setAuthError('Email addresses do not match');
+          return;
+        }
+        if (authData.password !== authData.confirmPassword) {
+          setAuthError('Passwords do not match');
+          return;
+        }
         
-        {/* Featured Campaigns */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Featured Coffee Mornings
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Join these inspiring coffee mornings and help make a difference in young lives across Ireland.
-              </p>
-            </div>
+        const { error } = await signUp(authData.email, authData.password, { full_name: authData.fullName });
+        if (error) throw error;
+        
+        // Pre-fill form with user data
+        setFormData(prev => ({
+          ...prev,
+          email: authData.email,
+          organizer: authData.fullName,
+          county: authData.county,
+          eircode: authData.eircode
+        }));
+        
+        setCurrentStep(2);
+      } else {
+        const { error } = await signIn(authData.email, authData.password);
+        if (error) throw error;
+        
+        setCurrentStep(2);
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
-            {campaignsLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading campaigns...</p>
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCampaignSubmit = async () => {
+    try {
+      console.log('Creating campaign with form data:', formData);
+      
+      // Create the campaign first
+      const campaignData = {
+        ...formData,
+        goalAmount: parseInt(formData.goalAmount),
+        userId: user?.id
+      };
+      
+      const createdCampaign = await onSubmit(campaignData);
+      console.log('Campaign created:', createdCampaign);
+      setCreatedCampaign(createdCampaign);
+      
+      // Create pack order
+      const packOrderData = {
+        campaignId: createdCampaign.id,
+        userId: user?.id,
+        packType: selectedPack,
+        amount: packOptions.find(p => p.id === selectedPack)!.price * 100, // Convert to cents
+        tshirtSizes: selectedPack !== 'free' ? tshirtSizes : null,
+        shippingAddress,
+        mobileNumber
+      };
+      
+      console.log('Creating pack order:', packOrderData);
+      const packOrderResult = await packOrderService.createPackOrder(packOrderData);
+      
+      if (packOrderResult.error) {
+        throw new Error(packOrderResult.error);
+      }
+      
+      console.log('Pack order created:', packOrderResult.data);
+      setCreatedPackOrder(packOrderResult.data);
+      
+      // Update campaign with pack order ID
+      const { error: updateError } = await supabase
+        .from('campaigns')
+        .update({ pack_order_id: packOrderResult.data!.id })
+        .eq('id', createdCampaign.id);
+      
+      if (updateError) {
+        console.error('Error linking pack order to campaign:', updateError);
+      }
+      
+      // Move to payment step
+      setCurrentStep(totalSteps);
+      
+    } catch (error) {
+      console.error('Error in campaign creation process:', error);
+      setPaymentError(error instanceof Error ? error.message : 'Failed to create campaign');
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentIntent: any) => {
+    try {
+      console.log('Pack payment successful, updating order status...');
+      
+      if (!createdPackOrder) {
+        throw new Error('No pack order found');
+      }
+      
+      // Update pack order payment status
+      const updateResult = await packOrderService.updatePackOrderPayment(
+        createdPackOrder.id,
+        {
+          payment_status: 'completed',
+          stripe_payment_intent_id: paymentIntent.id
+        }
+      );
+      
+      if (updateResult.error) {
+        throw new Error(updateResult.error);
+      }
+      
+      console.log('Pack order payment updated successfully');
+      
+      // Send confirmation email
+      if (createdCampaign && formData.email) {
+        console.log('Sending pack payment confirmation email...');
+        const emailResult = await emailService.sendPackPaymentConfirmation({
+          organizerEmail: formData.email,
+          organizerName: formData.organizer,
+          campaignTitle: formData.title,
+          packType: selectedPack,
+          amount: packOptions.find(p => p.id === selectedPack)!.price,
+          packOrderId: createdPackOrder.id
+        });
+        
+        if (!emailResult.success) {
+          console.error('Failed to send pack payment confirmation:', emailResult.error);
+        }
+      }
+      
+      setPaymentSuccess(true);
+      
+      // Close modal after success
+      setTimeout(() => {
+        onClose();
+        
+        // Show success message
+        const successToast = document.createElement('div');
+        successToast.className = 'fixed top-4 right-4 bg-green-100 border border-green-200 text-green-800 px-6 py-3 rounded-lg shadow-lg z-50';
+        successToast.innerHTML = `✅ Campaign created and ${selectedPack} pack ordered! Your campaign will be reviewed within 24 hours.`;
+        document.body.appendChild(successToast);
+        setTimeout(() => {
+          if (document.body.contains(successToast)) {
+            document.body.removeChild(successToast);
+          }
+        }, 5000);
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error updating pack payment:', error);
+      setPaymentError(error instanceof Error ? error.message : 'Payment succeeded but failed to update order');
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.log('Pack payment failed:', error);
+    setPaymentError(error);
+    
+    // Campaign is still created, just payment failed
+    // Show appropriate message to user
+    const warningToast = document.createElement('div');
+    warningToast.className = 'fixed top-4 right-4 bg-yellow-100 border border-yellow-200 text-yellow-800 px-6 py-3 rounded-lg shadow-lg z-50';
+    warningToast.innerHTML = `⚠️ Campaign created but payment failed. You can retry payment later from your dashboard.`;
+    document.body.appendChild(warningToast);
+    setTimeout(() => {
+      if (document.body.contains(warningToast)) {
+        document.body.removeChild(warningToast);
+      }
+    }, 5000);
+  };
+
+  const renderStepContent = () => {
+    // Step 1: Authentication (only if not logged in)
+    if (!user && currentStep === 1) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {authMode === 'signup' ? 'Create Your Account' : 'Sign In to Continue'}
+            </h3>
+            <p className="text-gray-600">
+              {authMode === 'signup' 
+                ? 'Create an account to manage your coffee morning campaign'
+                : 'Sign in to your existing account'
+              }
+            </p>
+          </div>
+
+          {authError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <p className="text-red-800 text-sm">{authError}</p>
               </div>
-            ) : campaignsError ? (
-              <div className="text-center py-12">
-                <p className="text-red-600 mb-4">Error loading campaigns: {campaignsError}</p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="bg-[#a8846d] text-white px-6 py-3 rounded-full hover:bg-[#96785f] transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            ) : campaigns.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                  {campaigns.slice(0, 6).map((campaign) => (
-                    <CampaignCard
-                      key={campaign.id}
-                      campaign={campaign}
-                      onViewCampaign={handleViewCampaign}
-                      onDonate={handleDonate}
-                    />
-                  ))}
-                </div>
-                
-                <div className="text-center">
-                  <button
-                    onClick={() => setShowCampaignsPage(true)}
-                    className="bg-[#a8846d] text-white px-8 py-4 rounded-full hover:bg-[#96785f] transition-colors font-semibold text-lg"
-                  >
-                    View All Campaigns
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600 mb-6">No campaigns available at the moment.</p>
-                <button
-                  onClick={handleCreateCampaign}
-                  className="bg-[#a8846d] text-white px-8 py-4 rounded-full hover:bg-[#96785f] transition-colors font-semibold"
-                >
-                  Be the First to Create a Campaign
-                </button>
+            </div>
+          )}
+
+          <form onSubmit={handleAuthSubmit} className="space-y-4">
+            {authMode === 'signup' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <User className="inline h-4 w-4 mr-1" />
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={authData.fullName}
+                  onChange={(e) => setAuthData({ ...authData, fullName: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your full name"
+                />
               </div>
             )}
-          </div>
-        </section>
 
-        <AboutSection />
-
-        {/* How It Works Section */}
-        <section id="how-it-works" className="py-16 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Starting your coffee morning is simple. Follow these easy steps to make a difference.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="bg-green-100 p-6 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-green-700">1</span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Create Your Campaign</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Set up your coffee morning campaign with your story, goal, and event details. 
-                  Our team will review and approve it within 24 hours.
-                </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Mail className="inline h-4 w-4 mr-1" />
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={authData.email}
+                  onChange={(e) => setAuthData({ ...authData, email: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="your.email@example.com"
+                />
               </div>
 
-              <div className="text-center">
-                <div className="bg-green-100 p-6 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-green-700">2</span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Share & Invite</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Share your campaign with friends, family, and community. Use social media, 
-                  email, and word of mouth to spread awareness.
-                </p>
-              </div>
-
-              <div className="text-center">
-                <div className="bg-green-100 p-6 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-green-700">3</span>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Host & Raise Funds</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Host your coffee morning event and watch donations come in. Every euro 
-                  goes directly to Youth Suicide Prevention Ireland.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Impact Section */}
-        <section className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Your Impact</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                See how your coffee morning contributions are making a real difference in preventing youth suicide.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="text-center bg-green-50 rounded-2xl p-8">
-                <div className="text-4xl font-bold text-green-700 mb-2">€25</div>
-                <p className="text-gray-700 font-medium mb-2">Provides</p>
-                <p className="text-gray-600 text-sm">Crisis support materials for one young person</p>
-              </div>
-
-              <div className="text-center bg-blue-50 rounded-2xl p-8">
-                <div className="text-4xl font-bold text-blue-700 mb-2">€50</div>
-                <p className="text-gray-700 font-medium mb-2">Funds</p>
-                <p className="text-gray-600 text-sm">One hour of professional counseling support</p>
-              </div>
-
-              <div className="text-center bg-purple-50 rounded-2xl p-8">
-                <div className="text-4xl font-bold text-purple-700 mb-2">€100</div>
-                <p className="text-gray-700 font-medium mb-2">Enables</p>
-                <p className="text-gray-600 text-sm">Mental health workshop for 20 students</p>
-              </div>
-
-              <div className="text-center bg-orange-50 rounded-2xl p-8">
-                <div className="text-4xl font-bold text-orange-700 mb-2">€250</div>
-                <p className="text-gray-700 font-medium mb-2">Supports</p>
-                <p className="text-gray-600 text-sm">Training for teachers and parents in one school</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Call to Action Section */}
-        <section className="py-16" style={{ background: 'linear-gradient(to bottom right, #009ca3, #007a7f)' }}>
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl font-bold text-white mb-6">
-              Ready to Make a Difference?
-            </h2>
-            <p className="text-xl text-white/80 mb-8 leading-relaxed">
-              Join hundreds of others across Ireland who are hosting coffee mornings to prevent youth suicide. 
-              Every conversation matters, every connection counts, and every euro saves lives.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={handleCreateCampaign}
-                className="bg-white text-[#a8846d] px-8 py-4 rounded-full hover:bg-gray-100 transition-colors font-semibold text-lg shadow-lg"
-              >
-                Start Your Coffee Morning
-              </button>
-              <button
-                onClick={() => setShowCampaignsPage(true)}
-                className="border-2 border-white text-white px-8 py-4 rounded-full hover:bg-white hover:text-[#a8846d] transition-colors font-semibold text-lg"
-              >
-                Support Existing Campaigns
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="flex items-center space-x-2">
-                  <div className="bg-green-600 p-2 rounded-lg">
-                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4.2 2 2.21 0 4.8-1.79 4.8-4 0-1.66-1.34-3-3-3zM20.5 10.5v.5h-1.5v4c0 1.45-1.19 2.5-2.5 2.5s-2.5-1.05-2.5-2.5v-4H12v.5c0 1.25-1.16 2.5-2.5 2.5S7 12.75 7 11.5V7c0-2.2 1.8-4 4-4s4 1.8 4 4v4.5h1.5v-1c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5z"/>
-                    </svg>
-                  </div>
-                  <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                  </svg>
-                </div>
+              {authMode === 'signup' && (
                 <div>
-                  <h3 className="text-xl font-bold">Youth Suicide Prevention Ireland</h3>
-                  <p className="text-gray-400 text-sm">Coffee Morning Challenge</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Mail className="inline h-4 w-4 mr-1" />
+                    Confirm Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={authData.confirmEmail}
+                    onChange={(e) => setAuthData({ ...authData, confirmEmail: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Confirm your email address"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={authData.password}
+                  onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Enter your password"
+                  minLength={6}
+                />
+              </div>
+
+              {authMode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={authData.confirmPassword}
+                    onChange={(e) => setAuthData({ ...authData, confirmPassword: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Confirm your password"
+                    minLength={6}
+                  />
+                </div>
+              )}
+            </div>
+
+            {authMode === 'signup' && (
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="inline h-4 w-4 mr-1" />
+                    County *
+                  </label>
+                  <select
+                    required
+                    value={authData.county}
+                    onChange={(e) => setAuthData({ ...authData, county: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    {irishCounties.map((county) => (
+                      <option key={county} value={county}>{county}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Eircode (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={authData.eircode}
+                    onChange={(e) => setAuthData({ ...authData, eircode: e.target.value.toUpperCase() })}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="A65 F4E2"
+                    maxLength={8}
+                  />
                 </div>
               </div>
-              <p className="text-gray-300 leading-relaxed mb-6">
-                Creating communities where every young life is valued and protected. Through coffee mornings, 
-                conversations, and connections, we're working together to prevent youth suicide across Ireland.
-              </p>
-              <div className="flex space-x-4">
-                <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-gray-700 transition-colors">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                  </svg>
-                </a>
-                <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-gray-700 transition-colors">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                  </svg>
-                </a>
-                <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-gray-700 transition-colors">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001.012.001z"/>
-                  </svg>
-                </a>
-                <a href="#" className="bg-gray-800 p-3 rounded-full hover:bg-gray-700 transition-colors">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.04 2c2.793 0 3.148.01 4.85.07 2.929.133 4.395 1.580 4.528 4.528.06 1.702.07 2.057.07 4.85s-.01 3.148-.07 4.85c-.133 2.948-1.599 4.395-4.528 4.528-1.702.06-2.057.07-4.85.07s-3.148-.01-4.85-.07c-2.929-.133-4.395-1.580-4.528-4.528-.06-1.702-.07-2.057-.07-4.85s.01-3.148.07-4.85C2.775 3.580 4.241 2.133 7.17 2c1.702-.06 2.057-.07 4.87-.07zM12.04 7.27a4.733 4.733 0 1 0 0 9.460 4.733 4.733 0 0 0 0-9.460zM18.205 6.855a1.125 1.125 0 1 0 0-2.250 1.125 1.125 0 0 0 0 2.250zm-6.161 3.029a3.096 3.096 0 1 1 0 6.191 3.096 3.096 0 0 1 0-6.191z"/>
-                  </svg>
-                </a>
-              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={authLoading}
+              className="w-full bg-green-700 text-white px-6 py-3 rounded-xl hover:bg-green-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              {authLoading ? 'Please wait...' : (authMode === 'signup' ? 'Create Account & Continue' : 'Sign In & Continue')}
+            </button>
+          </form>
+
+          <div className="text-center">
+            <p className="text-gray-600">
+              {authMode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+              <button
+                onClick={() => setAuthMode(authMode === 'signup' ? 'signin' : 'signup')}
+                className="text-green-700 hover:text-green-800 font-medium"
+              >
+                {authMode === 'signup' ? 'Sign in' : 'Sign up'}
+              </button>
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Adjust step numbers if user is already authenticated
+    const adjustedStep = user ? currentStep : currentStep - 1;
+
+    // Step 2: Basic Information
+    if (adjustedStep === 1) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Tell Us About Your Coffee Morning</h3>
+            <p className="text-gray-600">Share your story and inspire others to support your cause</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Target className="inline h-4 w-4 mr-1" />
+              Campaign Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="e.g., Sarah's Coffee Morning for Hope"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <User className="inline h-4 w-4 mr-1" />
+                Your Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.organizer}
+                onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Your full name"
+              />
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-6">Quick Links</h4>
-              <ul className="space-y-3">
-                <li><a href="#" className="text-gray-300 hover:text-white transition-colors">About YSPI</a></li>
-                <li><a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">How It Works</a></li>
-                <li><button onClick={() => setShowCampaignsPage(true)} className="text-gray-300 hover:text-white transition-colors text-left">Browse Campaigns</button></li>
-                <li><button onClick={handleCreateCampaign} className="text-gray-300 hover:text-white transition-colors text-left">Start Campaign</button></li>
-                <li><a href="https://ineedhelp.ie" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-white transition-colors">Crisis Support</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-semibold mb-6">Contact & Support</h4>
-              <ul className="space-y-3">
-                <li className="flex items-center space-x-2">
-                  <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z"/>
-                    <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z"/>
-                  </svg>
-                  <a href="mailto:admin@yspi.ie" className="text-gray-300 hover:text-white transition-colors">admin@yspi.ie</a>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" d="M1.5 4.5a3 3 0 013-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 01-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 006.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 011.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 01-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5z" clipRule="evenodd"/>
-                  </svg>
-                  <span className="text-gray-300">1800 828 888</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <svg className="h-4 w-4 text-gray-400 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd"/>
-                  </svg>
-                  <div className="text-gray-300">
-                    <div>83A New Street</div>
-                    <div>Killarney, County Kerry</div>
-                    <div>V93 W3KT</div>
-                  </div>
-                </li>
-                <li className="text-gray-400 text-sm">
-                  Registered Charity No. 20070670
-                </li>
-                <li>
-                  <button
-                    onClick={() => setShowAdminLogin(true)}
-                    className="text-gray-400 hover:text-white text-sm transition-colors"
-                  >
-                    Admin System
-                  </button>
-                </li>
-              </ul>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Mail className="inline h-4 w-4 mr-1" />
+                Email Address *
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="your.email@example.com"
+              />
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-12 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">
-                © 2025 Youth Suicide Prevention Ireland. All rights reserved.
-              </p>
-              <div className="flex space-x-6 mt-4 md:mt-0">
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</a>
-                <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Your Story *
+            </label>
+            <textarea
+              required
+              rows={4}
+              value={formData.story}
+              onChange={(e) => setFormData({ ...formData, story: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Tell people why this cause matters to you. Personal stories create stronger connections.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 3: Location & Event Details
+    if (adjustedStep === 2) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Event Details</h3>
+            <p className="text-gray-600">When and where will your coffee morning take place?</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                County *
+              </label>
+              <select
+                required
+                value={formData.county}
+                onChange={(e) => setFormData({ ...formData, county: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {irishCounties.map((county) => (
+                  <option key={county} value={county}>{county}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Eircode (Optional)
+              </label>
+              <input
+                type="text"
+                value={formData.eircode}
+                onChange={(e) => setFormData({ ...formData, eircode: e.target.value.toUpperCase() })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="A65 F4E2"
+                maxLength={8}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <MapPin className="inline h-4 w-4 mr-1" />
+              Event Location *
+            </label>
+            <input
+              type="text"
+              required
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="e.g., Community Centre, Main Street, Cork"
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Calendar className="inline h-4 w-4 mr-1" />
+                Event Date *
+              </label>
+              <input
+                type="date"
+                required
+                value={formData.eventDate}
+                onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Clock className="inline h-4 w-4 mr-1" />
+                Event Time *
+              </label>
+              <input
+                type="time"
+                required
+                value={formData.eventTime}
+                onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 4: Fundraising Goal
+    if (adjustedStep === 3) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Set Your Fundraising Goal</h3>
+            <p className="text-gray-600">How much would you like to raise for Youth Suicide Prevention Ireland?</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <Target className="inline h-4 w-4 mr-1" />
+              Fundraising Goal (€) *
+            </label>
+            <input
+              type="number"
+              required
+              min="100"
+              max="50000"
+              value={formData.goalAmount}
+              onChange={(e) => setFormData({ ...formData, goalAmount: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="e.g., 2000"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Minimum €100, maximum €50,000. Consider what's realistic for your network and event size.
+            </p>
+          </div>
+
+          <div className="bg-green-50 rounded-2xl p-6">
+            <h4 className="font-semibold text-green-900 mb-4">Your Impact</h4>
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-green-800">€25 = Crisis support materials for one young person</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-green-800">€50 = One hour of professional counseling</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-green-800">€100 = Mental health workshop for 20 students</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <span className="text-green-800">€250 = Teacher training in one school</span>
               </div>
             </div>
           </div>
         </div>
-      </footer>
+      );
+    }
 
-      {/* Modals */}
-      {showCampaignDetail && selectedCampaign && (
-        <CampaignDetail
-          campaign={selectedCampaign}
-          onClose={() => setShowCampaignDetail(false)}
-          onDonate={handleDonate}
-        />
-      )}
+    // Step 5: Social Media (Optional)
+    if (adjustedStep === 4) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Social Media</h3>
+            <p className="text-gray-600">Help people find and follow your campaign (optional)</p>
+          </div>
 
-      {showDonationModal && selectedCampaign && (
-        <DonationModal
-          campaign={selectedCampaign}
-          onClose={() => setShowDonationModal(false)}
-          onDonate={handleDonationSubmit}
-        />
-      )}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Share2 className="inline h-4 w-4 mr-1" />
+                Facebook Page
+              </label>
+              <input
+                type="url"
+                value={formData.socialLinks.facebook}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  socialLinks: { ...formData.socialLinks, facebook: e.target.value }
+                })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://facebook.com/yourpage"
+              />
+            </div>
 
-      {showCreateCampaign && (
-        <CreateCampaignModal
-          onClose={() => setShowCreateCampaign(false)}
-          onSubmit={handleCampaignSubmit}
-        />
-      )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Instagram
+              </label>
+              <input
+                type="url"
+                value={formData.socialLinks.instagram}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  socialLinks: { ...formData.socialLinks, instagram: e.target.value }
+                })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://instagram.com/youraccount"
+              />
+            </div>
 
-      {showAuth && (
-        <AuthModal
-          onClose={() => setShowAuth(false)}
-          mode={authMode}
-          onModeChange={setAuthMode}
-        />
-      )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Twitter/X
+              </label>
+              <input
+                type="url"
+                value={formData.socialLinks.twitter}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  socialLinks: { ...formData.socialLinks, twitter: e.target.value }
+                })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://twitter.com/youraccount"
+              />
+            </div>
 
-      {showMyCampaigns && (
-        <MyCampaignsModal
-          onClose={() => {
-            setShowMyCampaigns(false);
-            window.location.hash = '';
-          }}
-          onCreateCampaign={() => {
-            setShowMyCampaigns(false);
-            setShowCreateCampaign(true);
-          }}
-        />
-      )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                WhatsApp Group
+              </label>
+              <input
+                type="url"
+                value={formData.socialLinks.whatsapp}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  socialLinks: { ...formData.socialLinks, whatsapp: e.target.value }
+                })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="https://chat.whatsapp.com/..."
+              />
+            </div>
+          </div>
+
+          <div className="bg-blue-50 rounded-2xl p-6">
+            <h4 className="font-semibold text-blue-900 mb-2">💡 Pro Tip</h4>
+            <p className="text-blue-800 text-sm">
+              Social media links help build trust and allow supporters to follow your journey. 
+              You can always add these later if you don't have them ready now.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 6: Pack Selection
+    if (adjustedStep === 5) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Choose Your Coffee Morning Pack</h3>
+            <p className="text-gray-600">Select the pack that best suits your event size and needs</p>
+          </div>
+
+          <div className="grid gap-6">
+            {packOptions.map((pack) => (
+              <div
+                key={pack.id}
+                className={`relative border-2 rounded-2xl p-6 cursor-pointer transition-all ${
+                  selectedPack === pack.id
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-green-300'
+                } ${pack.popular ? 'ring-2 ring-green-200' : ''}`}
+                onClick={() => setSelectedPack(pack.id)}
+              >
+                {pack.popular && (
+                  <div className="absolute -top-3 left-6 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    Most Popular
+                  </div>
+                )}
+                
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <h4 className="text-lg font-bold text-gray-900">{pack.name}</h4>
+                    <p className="text-gray-600">{pack.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-900">€{pack.price}</div>
+                    <div className="text-sm text-gray-500">
+                      {pack.id === 'free' ? 'Postage only' : 'Inc. €10 postage'}
+                    </div>
+                  </div>
+                </div>
+
+                <ul className="space-y-2">
+                  {pack.items.map((item, index) => (
+                    <li key={index} className="flex items-center space-x-2 text-sm text-gray-700">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-4">
+                  <input
+                    type="radio"
+                    id={pack.id}
+                    name="pack"
+                    checked={selectedPack === pack.id}
+                    onChange={() => setSelectedPack(pack.id)}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor={pack.id}
+                    className={`block w-full text-center py-2 px-4 rounded-lg font-medium transition-colors ${
+                      selectedPack === pack.id
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {selectedPack === pack.id ? 'Selected' : 'Select This Pack'}
+                  </label>
+                </div>
+
+                {/* T-shirt sizes for medium and large packs */}
+                {selectedPack === pack.id && pack.id !== 'free' && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h5 className="font-medium text-gray-900 mb-3">
+                      T-shirt Sizes ({pack.id === 'medium' ? '2 shirts' : '4 shirts'})
+                    </h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      {Array.from({ length: pack.id === 'medium' ? 2 : 4 }, (_, i) => (
+                        <div key={i}>
+                          <label className="block text-sm text-gray-700 mb-1">
+                            Shirt {i + 1}
+                          </label>
+                          <select
+                            value={tshirtSizes[`shirt_${i + 1}` as keyof typeof tshirtSizes]}
+                            onChange={(e) => setTshirtSizes({
+                              ...tshirtSizes,
+                              [`shirt_${i + 1}`]: e.target.value
+                            })}
+                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          >
+                            {tshirtSizes.map((size) => (
+                              <option key={size} value={size}>{size}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Step 7: Shipping Information
+    if (adjustedStep === 6) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Shipping Information</h3>
+            <p className="text-gray-600">Where should we send your Coffee Morning pack?</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={shippingAddress.name}
+              onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Full name for delivery"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Address Line 1 *
+            </label>
+            <input
+              type="text"
+              required
+              value={shippingAddress.address_line_1}
+              onChange={(e) => setShippingAddress({ ...shippingAddress, address_line_1: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Street address"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Address Line 2 (Optional)
+            </label>
+            <input
+              type="text"
+              value={shippingAddress.address_line_2}
+              onChange={(e) => setShippingAddress({ ...shippingAddress, address_line_2: e.target.value })}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              placeholder="Apartment, suite, etc."
+            />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                City/Town *
+              </label>
+              <input
+                type="text"
+                required
+                value={shippingAddress.city}
+                onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="City or town"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                County *
+              </label>
+              <select
+                required
+                value={shippingAddress.county}
+                onChange={(e) => setShippingAddress({ ...shippingAddress, county: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {irishCounties.map((county) => (
+                  <option key={county} value={county}>{county}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Eircode *
+              </label>
+              <input
+                type="text"
+                required
+                value={shippingAddress.eircode}
+                onChange={(e) => setShippingAddress({ ...shippingAddress, eircode: e.target.value.toUpperCase() })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="A65 F4E2"
+                maxLength={8}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Mobile Number *
+              </label>
+              <input
+                type="tel"
+                required
+                value={mobileNumber}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="+353 87 123 4567"
+              />
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="flex items-start space-x-2">
+              <Package className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-900 mb-1">Delivery Information</h4>
+                <p className="text-blue-800 text-sm">
+                  Your {packOptions.find(p => p.id === selectedPack)?.name} will be posted to this address within 3-5 business days after payment confirmation.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Final Step: Payment
+    if (adjustedStep === totalSteps - (user ? 0 : 1)) {
+      if (paymentSuccess) {
+        return (
+          <div className="text-center py-8">
+            <div className="bg-green-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Campaign Created Successfully!</h3>
+            <p className="text-gray-600 mb-4">
+              Your campaign has been created and your {packOptions.find(p => p.id === selectedPack)?.name.toLowerCase()} has been ordered.
+            </p>
+            <p className="text-sm text-gray-500">
+              Your campaign will be reviewed and approved within 24 hours. You'll receive an email confirmation shortly.
+            </p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-6">
+          <div className="text-center mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Complete Your Order</h3>
+            <p className="text-gray-600">
+              Your campaign has been created! Complete payment to get your {packOptions.find(p => p.id === selectedPack)?.name.toLowerCase()}.
+            </p>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+            <h4 className="font-semibold text-green-900 mb-4">Order Summary</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-green-800">Campaign:</span>
+                <span className="font-medium text-green-900">{formData.title}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-green-800">Pack:</span>
+                <span className="font-medium text-green-900">
+                  {packOptions.find(p => p.id === selectedPack)?.name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-green-800">Delivery to:</span>
+                <span className="font-medium text-green-900">{shippingAddress.name}</span>
+              </div>
+              <div className="border-t border-green-200 pt-3 flex justify-between">
+                <span className="text-green-800 font-semibold">Total:</span>
+                <span className="font-bold text-green-900 text-lg">
+                  €{packOptions.find(p => p.id === selectedPack)?.price}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {paymentError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <p className="text-red-800 text-sm">{paymentError}</p>
+              </div>
+            </div>
+          )}
+
+          {stripePromise && createdPackOrder ? (
+            <Elements stripe={stripePromise}>
+              <PackPaymentForm
+                packOrderId={createdPackOrder.id}
+                amount={packOptions.find(p => p.id === selectedPack)!.price}
+                packType={selectedPack}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+              />
+            </Elements>
+          ) : (
+            <div className="text-center py-8">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <p className="text-red-800 font-medium">Payment system configuration error</p>
+                <p className="text-red-600 text-sm mt-1">
+                  Unable to load payment form. Please contact support.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const getStepTitle = () => {
+    if (!user && currentStep === 1) return 'Account Setup';
+    
+    const adjustedStep = user ? currentStep : currentStep - 1;
+    
+    switch (adjustedStep) {
+      case 1: return 'Basic Information';
+      case 2: return 'Event Details';
+      case 3: return 'Fundraising Goal';
+      case 4: return 'Social Media';
+      case 5: return 'Pack Selection';
+      case 6: return 'Payment';
+      default: return 'Create Campaign';
+    }
+  };
+
+  const canProceed = () => {
+    if (!user && currentStep === 1) {
+      if (authMode === 'signup') {
+        return authData.email && authData.confirmEmail && authData.password && authData.confirmPassword && authData.fullName && authData.county;
+      } else {
+        return authData.email && authData.password;
+      }
+    }
+
+    const adjustedStep = user ? currentStep : currentStep - 1;
+
+    switch (adjustedStep) {
+      case 1:
+        return formData.title && formData.organizer && formData.email && formData.story;
+      case 2:
+        return formData.county && formData.location && formData.eventDate && formData.eventTime;
+      case 3:
+        return formData.goalAmount && parseInt(formData.goalAmount) >= 100;
+      case 4:
+        return true; // Social media is optional
+      case 5:
+        return selectedPack && shippingAddress.name && shippingAddress.address_line_1 && 
+               shippingAddress.city && shippingAddress.county && shippingAddress.eircode && mobileNumber;
+      case 6:
+        return false; // Payment step, no "next" button
+      default:
+        return false;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Create Your Coffee Morning</h2>
+              <p className="text-gray-600">Step {currentStep} of {totalSteps}: {getStepTitle()}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="h-6 w-6 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-gray-700">Progress</span>
+              <span className="text-sm text-gray-600">{Math.round((currentStep / totalSteps) * 100)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {renderStepContent()}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-8 border-t border-gray-200">
+            <button
+              onClick={currentStep === 1 ? onClose : handleBack}
+              className="border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+            >
+              {currentStep === 1 ? 'Cancel' : 'Back'}
+            </button>
+
+            {currentStep < totalSteps && (
+              <button
+                onClick={currentStep === totalSteps - 1 ? handleCampaignSubmit : handleNext}
+                disabled={!canProceed()}
+                className="bg-green-700 text-white px-6 py-3 rounded-xl hover:bg-green-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {currentStep === totalSteps - 1 ? 'Create Campaign & Continue' : 'Continue'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-
-export default App;
