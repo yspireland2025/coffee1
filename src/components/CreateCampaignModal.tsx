@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import { irishCounties } from '../data/counties';
 import { packOrderService } from '../services/packOrderService';
 import { emailService } from '../services/emailService';
+import { supabase } from '../lib/supabase';
 
 interface CreateCampaignModalProps {
   onClose: () => void;
