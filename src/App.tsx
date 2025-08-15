@@ -24,6 +24,21 @@ export default function App() {
   const { user, resetSessionTimer } = useAuth();
   const { adminUser, adminLogin, adminLogout, isAdmin } = useAdmin();
   
+  // Debug state
+  console.log('=== APP COMPONENT STATE ===', {
+    isAdmin,
+    adminUser: !!adminUser,
+    showAdminLogin,
+    showCampaignsPage,
+    showCreateCampaign,
+    showAuthModal,
+    showMyCampaigns,
+    user: !!user,
+    campaignsCount: campaigns.length,
+    loading,
+    error
+  });
+
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCampaignDetail, setShowCampaignDetail] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
@@ -33,17 +48,6 @@ export default function App() {
   const [showCampaignsPage, setShowCampaignsPage] = useState(false);
   const [showMyCampaigns, setShowMyCampaigns] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
-
-  console.log('App render state:', {
-    isAdmin,
-    showAdminLogin,
-    showCampaignsPage,
-    showCreateCampaign,
-    showAuthModal,
-    showMyCampaigns,
-    showCampaignDetail,
-    showDonationModal
-  });
 
   // Check for admin route
   useEffect(() => {
@@ -147,11 +151,13 @@ export default function App() {
 
   // Show admin login if requested
   if (showAdminLogin) {
+    console.log('=== RENDERING ADMIN LOGIN ===');
     return <AdminLogin onLogin={handleAdminLogin} />;
   }
 
   // Show campaigns page
   if (showCampaignsPage) {
+    console.log('=== RENDERING CAMPAIGNS PAGE ===');
     return (
       <CampaignsPage
         campaigns={campaigns}
@@ -160,17 +166,22 @@ export default function App() {
     );
   }
 
+  console.log('=== RENDERING MAIN APP ===');
+
   return (
     <div className="min-h-screen bg-white">
+      {console.log('=== RENDERING HEADER ===')}
       <Header 
         onCreateCampaign={handleCreateCampaign}
         showMyCampaigns={showMyCampaigns}
         setShowMyCampaigns={setShowMyCampaigns}
       />
       
+      {console.log('=== RENDERING HERO ===')}
       <Hero onCreateCampaign={handleCreateCampaign} />
 
       {/* How It Works Section */}
+      {console.log('=== RENDERING HOW IT WORKS ===')}
       <section id="how-it-works" className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
