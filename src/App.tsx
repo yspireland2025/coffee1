@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare, Target } from 'lucide-react';
+import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare, Target, Users } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useCampaigns } from './hooks/useCampaigns';
 import { useAdmin } from './hooks/useAdmin';
