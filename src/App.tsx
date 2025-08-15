@@ -3,10 +3,10 @@ import { X, User, Mail, MapPin, Calendar, Clock, Target, Image, Share2, Package,
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from './lib/stripe';
 import PackPaymentForm from './components/PackPaymentForm';
-import { useAuth } from '../hooks/useAuth';
-import { irishCounties } from '../data/counties';
-import { packOrderService } from '../services/packOrderService';
-import { emailService } from '../services/emailService';
+import { useAuth } from './hooks/useAuth';
+import { irishCounties } from './data/counties';
+import { packOrderService } from './services/packOrderService';
+import { emailService } from './services/emailService';
 
 interface CreateCampaignModalProps {
   onClose: () => void;
