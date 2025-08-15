@@ -20,14 +20,24 @@ import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 
 export default function App() {
+  console.log('=== APP COMPONENT STARTING ===');
+  
   const { campaigns, loading, error } = useCampaigns();
   const { user, resetSessionTimer } = useAuth();
   const { adminUser, adminLogin, adminLogout, isAdmin } = useAdmin();
   
-  // Debug state
-  console.log('=== APP COMPONENT STATE ===', {
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [showCampaignDetail, setShowCampaignDetail] = useState(false);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [showCampaignsPage, setShowCampaignsPage] = useState(false);
+  const [showMyCampaigns, setShowMyCampaigns] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  console.log('=== APP STATE ===', {
     isAdmin,
-    adminUser: !!adminUser,
     showAdminLogin,
     showCampaignsPage,
     showCreateCampaign,
@@ -38,16 +48,6 @@ export default function App() {
     loading,
     error
   });
-
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [showCampaignDetail, setShowCampaignDetail] = useState(false);
-  const [showDonationModal, setShowDonationModal] = useState(false);
-  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [showCampaignsPage, setShowCampaignsPage] = useState(false);
-  const [showMyCampaigns, setShowMyCampaigns] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   // Check for admin route
   useEffect(() => {
@@ -91,6 +91,7 @@ export default function App() {
   }, [resetSessionTimer]);
 
   const handleCreateCampaign = () => {
+    console.log('=== CREATE CAMPAIGN CLICKED ===');
     resetSessionTimer();
     setShowCreateCampaign(true);
   };
@@ -146,6 +147,7 @@ export default function App() {
 
   // Show admin dashboard if admin is logged in
   if (isAdmin) {
+    console.log('=== RENDERING ADMIN DASHBOARD ===');
     return <AdminDashboard onLogout={handleAdminLogout} />;
   }
 
@@ -170,18 +172,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white">
-      {console.log('=== RENDERING HEADER ===')}
       <Header 
         onCreateCampaign={handleCreateCampaign}
         showMyCampaigns={showMyCampaigns}
         setShowMyCampaigns={setShowMyCampaigns}
       />
       
-      {console.log('=== RENDERING HERO ===')}
       <Hero onCreateCampaign={handleCreateCampaign} />
 
       {/* How It Works Section */}
-      {console.log('=== RENDERING HOW IT WORKS ===')}
       <section id="how-it-works" className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
