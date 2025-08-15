@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, AlertCircle } from 'lucide-react';
+import { Send, AlertCircle, User, Mail, Phone, MessageSquare, Shield, CheckCircle } from 'lucide-react';
 import { emailService } from '../services/emailService';
 
 export default function ContactForm() {
