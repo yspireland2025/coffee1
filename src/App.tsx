@@ -380,57 +380,54 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
-              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <div className="text-center bg-white rounded-3xl p-8 shadow-lg">
+              <div className="bg-[#009ca3] p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                 <Users className="h-10 w-10 text-white" />
               </div>
-              <p className="text-4xl font-bold text-white mb-2">
+              <p className="text-4xl font-bold text-[#009ca3] mb-2">
                 356
               </p>
-              <p className="text-white/90 text-lg">Crisis Contacts</p>
-              <p className="text-white/70 text-sm mt-2">Handled per day on average</p>
+              <p className="text-[#009ca3] text-lg font-semibold">Crisis Contacts</p>
+              <p className="text-[#009ca3]/70 text-sm mt-2">Handled per day on average</p>
             </div>
 
-            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
-              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <div className="text-center bg-white rounded-3xl p-8 shadow-lg">
+              <div className="bg-[#009ca3] p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                 <Coffee className="h-10 w-10 text-white" />
               </div>
-              <p className="text-4xl font-bold text-white mb-2">
+              <p className="text-4xl font-bold text-[#009ca3] mb-2">
                 1,486
               </p>
-              <p className="text-white/90 text-lg">Schools Reached</p>
-              <p className="text-white/70 text-sm mt-2">Mental health packs sent to secondary schools</p>
+              <p className="text-[#009ca3] text-lg font-semibold">Schools Reached</p>
+              <p className="text-[#009ca3]/70 text-sm mt-2">Mental health packs sent to secondary schools</p>
             </div>
 
-            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
-              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <div className="text-center bg-white rounded-3xl p-8 shadow-lg">
+              <div className="bg-[#009ca3] p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                 <Target className="h-10 w-10 text-white" />
               </div>
-              <p className="text-4xl font-bold text-white mb-2">
+              <p className="text-4xl font-bold text-[#009ca3] mb-2">
                 4,516
               </p>
-              <p className="text-white/90 text-lg">Youth Organisations</p>
-              <p className="text-white/70 text-sm mt-2">Resource packs sent to GAA clubs & youth groups</p>
+              <p className="text-[#009ca3] text-lg font-semibold">Youth Organisations</p>
+              <p className="text-[#009ca3]/70 text-sm mt-2">Resource packs sent to GAA clubs & youth groups</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
-            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
-              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <div className="text-center bg-white rounded-3xl p-8 shadow-lg">
+              <div className="bg-[#009ca3] p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                 <MapPin className="h-10 w-10 text-white" />
               </div>
-              <p className="text-4xl font-bold text-white mb-2">
+              <p className="text-4xl font-bold text-[#009ca3] mb-2">
                 112,344
               </p>
-              <p className="text-white/90 text-lg">Publications Downloaded</p>
-              <p className="text-white/70 text-sm mt-2">Mental health resources accessed online</p>
+              <p className="text-[#009ca3] text-lg font-semibold">Publications Downloaded</p>
+              <p className="text-[#009ca3]/70 text-sm mt-2">Mental health resources accessed online</p>
             </div>
           </div>
 
           <div className="text-center mt-12">
-            <p className="text-white/90 text-lg mb-6">
-              Join these amazing communities making a difference
-            </p>
             <button
               onClick={handleCreateCampaign}
               className="bg-white text-[#009ca3] px-8 py-4 rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 font-semibold text-lg shadow-lg"
