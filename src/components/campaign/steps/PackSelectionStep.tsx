@@ -67,7 +67,7 @@ export default function PackSelectionStep({
   setShippingAddress,
   mobileNumber,
   setMobileNumber,
-  tshirtSizes,
+  tshirtSizes: selectedTshirtSizes,
   setTshirtSizes
 }: PackSelectionStepProps) {
   return (
@@ -154,9 +154,9 @@ export default function PackSelectionStep({
                   T-shirt {i + 1}
                 </label>
                 <select
-                  value={tshirtSizes[`shirt_${i + 1}` as keyof TshirtSizes]}
+                  value={selectedTshirtSizes[`shirt_${i + 1}` as keyof TshirtSizes]}
                   onChange={(e) => setTshirtSizes({
-                    ...tshirtSizes,
+                    ...selectedTshirtSizes,
                     [`shirt_${i + 1}`]: e.target.value
                   })}
                   className="w-full p-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
