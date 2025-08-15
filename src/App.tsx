@@ -43,6 +43,51 @@ export default function App() {
         }
       }
     };
+import React, { useState, useEffect } from 'react';
+import { Coffee, AlertCircle } from 'lucide-react';
+import { useAuth } from './hooks/useAuth';
+import { useCampaigns } from './hooks/useCampaigns';
+import { useAdmin } from './hooks/useAdmin';
+import { campaignService } from './services/campaignService';
+import { Campaign } from './types';
+
+import Header from './components/Header';
+import Hero from './components/Hero';
+import CampaignCard from './components/CampaignCard';
+import CampaignDetail from './components/CampaignDetail';
+import DonationModal from './components/DonationModal';
+import AuthModal from './components/AuthModal';
+import CampaignsPage from './components/CampaignsPage';
+import MyCampaignsModal from './components/MyCampaignsModal';
+import AboutSection from './components/AboutSection';
+import CreateCampaignModal from './components/campaign/CreateCampaignModal';
+import AdminLogin from './components/admin/AdminLogin';
+import AdminDashboard from './components/admin/AdminDashboard';
+
+export default function App() {
+  const { campaigns, loading, error } = useCampaigns();
+  const { user, resetSessionTimer } = useAuth();
+  const { adminUser, adminLogin, adminLogout, isAdmin } = useAdmin();
+  
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [showCampaignDetail, setShowCampaignDetail] = useState(false);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
+  const [showCampaignsPage, setShowCampaignsPage] = useState(false);
+  const [showMyCampaigns, setShowMyCampaigns] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  // Check for admin route
+  useEffect(() => {
+    const checkAdminRoute = () => {
+      if (window.location.hash === '#admin') {
+        if (!isAdmin) {
+          setShowAdminLogin(true);
+        }
+      }
+    };
 
     checkAdminRoute();
     window.addEventListener('hashchange', checkAdminRoute);
