@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, User, Mail, Phone, MessageSquare, Shield, CheckCircle } from 'lucide-react';
+import { Send, User, Mail, Phone, MessageSquare, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { emailService } from '../services/emailService';
 
 export default function ContactForm() {
@@ -28,32 +28,23 @@ export default function ContactForm() {
 
     try {
       // Send email to admin
-      const adminEmailResult = await emailService.sendEmail(
-        'admin@yspi.ie',
-        'contact_form',
-        {
-          sender_name: formData.name,
-          sender_email: formData.email,
-          sender_mobile: formData.mobile || 'Not provided',
-          message: formData.message,
-          submitted_at: new Date().toLocaleString()
-        }
-      );
+      const adminEmailResult = await emailService.sendContactForm({
+        senderName: formData.name,
+        senderEmail: formData.email,
+        senderMobile: formData.mobile,
+        message: formData.message
+      });
 
       if (!adminEmailResult.success) {
         throw new Error(adminEmailResult.error || 'Failed to send message to admin');
       }
 
       // Send confirmation email to sender
-      const confirmationResult = await emailService.sendEmail(
-        formData.email,
-        'contact_confirmation',
-        {
-          sender_name: formData.name,
-          message: formData.message,
-          submitted_at: new Date().toLocaleString()
-        }
-      );
+      const confirmationResult = await emailService.sendContactConfirmation({
+        senderEmail: formData.email,
+        senderName: formData.name,
+        message: formData.message
+      });
 
       if (!confirmationResult.success) {
         console.warn('Failed to send confirmation email:', confirmationResult.error);
