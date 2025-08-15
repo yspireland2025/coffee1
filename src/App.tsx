@@ -370,7 +370,7 @@ export default function App() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-br from-[#009ca3] to-[#a8846d]">
+      <section className="py-16 bg-[#009ca3]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-white mb-4">Our Impact Across Ireland</h2>
