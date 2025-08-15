@@ -34,6 +34,17 @@ export default function App() {
   const [showMyCampaigns, setShowMyCampaigns] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
+  console.log('App render state:', {
+    isAdmin,
+    showAdminLogin,
+    showCampaignsPage,
+    showCreateCampaign,
+    showAuthModal,
+    showMyCampaigns,
+    showCampaignDetail,
+    showDonationModal
+  });
+
   // Check for admin route
   useEffect(() => {
     const checkAdminRoute = () => {
