@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, User, Mail, MapPin, Calendar, Clock, Target, Image, Share2, Package, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise } from './lib/stripe';
-import PackPaymentForm from './PackPaymentForm';
+import PackPaymentForm from './components/PackPaymentForm';
 import { useAuth } from '../hooks/useAuth';
 import { irishCounties } from '../data/counties';
 import { packOrderService } from '../services/packOrderService';
