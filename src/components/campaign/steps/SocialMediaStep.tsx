@@ -12,7 +12,8 @@ export default function SocialMediaStep({ formData, setFormData }: SocialMediaSt
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Social Media</h3>
-        <p className="text-gray-600">Help people find and follow your campaign (optional)</p>
+        <p className="text-gray-600">Help people find and follow your campaign</p>
+        <p className="text-sm text-gray-500 mt-1">This step is optional - you can skip it if you prefer</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
