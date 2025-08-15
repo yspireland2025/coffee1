@@ -375,34 +375,31 @@ export default function App() {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-white mb-4">Our Impact Across Ireland</h2>
             <p className="text-xl text-white/90 max-w-3xl mx-auto">
-              See how coffee mornings are making a difference in communities nationwide
+              See how YSPI is making a difference in communities nationwide
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
               <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <Coffee className="h-10 w-10 text-white" />
+                <Users className="h-10 w-10 text-white" />
               </div>
               <p className="text-4xl font-bold text-white mb-2">
-                {loading ? '...' : campaigns.length}
+                356
               </p>
-              <p className="text-white/90 text-lg">Active Campaigns</p>
-              <p className="text-white/70 text-sm mt-2">Coffee mornings happening now</p>
+              <p className="text-white/90 text-lg">Crisis Contacts</p>
+              <p className="text-white/70 text-sm mt-2">Handled per day on average</p>
             </div>
 
             <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
               <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <MapPin className="h-10 w-10 text-white" />
+                <Coffee className="h-10 w-10 text-white" />
               </div>
               <p className="text-4xl font-bold text-white mb-2">
-                {loading ? '...' : [...new Set(campaigns.map(c => {
-                  const locationParts = c.location.split(',');
-                  return locationParts[locationParts.length - 1]?.trim() || 'Unknown';
-                }))].length}
+                1,486
               </p>
-              <p className="text-white/90 text-lg">Counties Active</p>
-              <p className="text-white/70 text-sm mt-2">Communities across Ireland</p>
+              <p className="text-white/90 text-lg">Schools Reached</p>
+              <p className="text-white/70 text-sm mt-2">Mental health packs sent to secondary schools</p>
             </div>
 
             <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
@@ -410,10 +407,23 @@ export default function App() {
                 <Target className="h-10 w-10 text-white" />
               </div>
               <p className="text-4xl font-bold text-white mb-2">
-                {loading ? '...' : `€${campaigns.reduce((sum, campaign) => sum + campaign.raisedAmount, 0).toLocaleString()}`}
+                4,516
               </p>
-              <p className="text-white/90 text-lg">Total Raised</p>
-              <p className="text-white/70 text-sm mt-2">Supporting youth mental health</p>
+              <p className="text-white/90 text-lg">Youth Organisations</p>
+              <p className="text-white/70 text-sm mt-2">Resource packs sent to GAA clubs & youth groups</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
+              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                <MapPin className="h-10 w-10 text-white" />
+              </div>
+              <p className="text-4xl font-bold text-white mb-2">
+                112,344
+              </p>
+              <p className="text-white/90 text-lg">Publications Downloaded</p>
+              <p className="text-white/70 text-sm mt-2">Mental health resources accessed online</p>
             </div>
           </div>
 
