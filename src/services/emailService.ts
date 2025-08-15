@@ -46,6 +46,18 @@ export interface EmailTemplate {
     campaign_title: string;
     message: string;
   };
+  contact_form: {
+    sender_name: string;
+    sender_email: string;
+    sender_mobile: string;
+    message: string;
+    submitted_at: string;
+  };
+  contact_confirmation: {
+    sender_name: string;
+    message: string;
+    submitted_at: string;
+  };
 }
 
 class EmailService {
@@ -495,6 +507,113 @@ class EmailService {
       sender_name: confirmationData.senderName,
       campaign_title: confirmationData.campaignTitle,
       message: confirmationData.message
+    });
+  }
+    },
+    contact_form: {
+      subject: 'New Contact Form Message from {{sender_name}}',
+      html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
+    <h1 style="color: white; margin: 0; font-size: 28px;">New Contact Message</h1>
+    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">From the Coffee Morning website</p>
+  </div>
+  
+  <div style="padding: 30px; background: white;">
+    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">New contact form submission:</p>
+    
+    <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="color: #059669; margin: 0 0 10px 0;">Contact Details</h3>
+      <p style="margin: 5px 0; color: #374151;"><strong>Name:</strong> {{sender_name}}</p>
+      <p style="margin: 5px 0; color: #374151;"><strong>Email:</strong> {{sender_email}}</p>
+      <p style="margin: 5px 0; color: #374151;"><strong>Mobile:</strong> {{sender_mobile}}</p>
+      <p style="margin: 5px 0; color: #374151;"><strong>Submitted:</strong> {{submitted_at}}</p>
+    </div>
+    
+    <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+      <h3 style="color: #3b82f6; margin: 0 0 10px 0;">Message</h3>
+      <p style="color: #374151; line-height: 1.6; font-style: italic;">"{{message}}"</p>
+    </div>
+    
+    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+      Please respond to this inquiry within 24 hours during business days.
+    </p>
+  </div>
+  
+  <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+    <p style="color: #6b7280; font-size: 14px; margin: 0;">
+      Youth Suicide Prevention Ireland<br>
+      <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
+    </p>
+  </div>
+</div>`
+    },
+    contact_confirmation: {
+      subject: 'Thank you for contacting YSPI - We\'ll be in touch soon',
+      html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
+    <h1 style="color: white; margin: 0; font-size: 28px;">Thank You!</h1>
+    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Your message has been received</p>
+  </div>
+  
+  <div style="padding: 30px; background: white;">
+    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">Dear {{sender_name}},</p>
+    
+    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+      Thank you for reaching out to Youth Suicide Prevention Ireland. We've received your message 
+      and will respond within 24 hours during business days.
+    </p>
+    
+    <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+      <h3 style="color: #059669; margin: 0 0 10px 0;">Your Message</h3>
+      <p style="color: #374151; line-height: 1.6; font-style: italic;">"{{message}}"</p>
+      <p style="color: #6b7280; font-size: 12px; margin: 10px 0 0 0;">Submitted: {{submitted_at}}</p>
+    </div>
+    
+    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+      In the meantime, feel free to browse our active coffee morning campaigns or learn more 
+      about how you can get involved in supporting youth mental health in your community.
+    </p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${window.location.origin}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Browse Campaigns</a>
+    </div>
+  </div>
+  
+  <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+    <p style="color: #6b7280; font-size: 14px; margin: 0;">
+      Youth Suicide Prevention Ireland<br>
+      83A New Street, Killarney, County Kerry V93 W3KT Ireland<br>
+      <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
+    </p>
+  </div>
+</div>`
+
+  async sendContactForm(contactData: {
+    senderName: string;
+    senderEmail: string;
+    senderMobile: string;
+    message: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    return this.sendEmail('admin@yspi.ie', 'contact_form', {
+      sender_name: contactData.senderName,
+      sender_email: contactData.senderEmail,
+      sender_mobile: contactData.senderMobile,
+      message: contactData.message,
+      submitted_at: new Date().toLocaleString()
+    });
+  }
+
+  async sendContactConfirmation(confirmationData: {
+    senderEmail: string;
+    senderName: string;
+    message: string;
+  }): Promise<{ success: boolean; error?: string }> {
+    return this.sendEmail(confirmationData.senderEmail, 'contact_confirmation', {
+      sender_name: confirmationData.senderName,
+      message: confirmationData.message,
+      submitted_at: new Date().toLocaleString()
     });
   }
 }

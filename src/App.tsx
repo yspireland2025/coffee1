@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, AlertCircle } from 'lucide-react';
+import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useCampaigns } from './hooks/useCampaigns';
 import { useAdmin } from './hooks/useAdmin';
@@ -16,6 +16,7 @@ import CampaignsPage from './components/CampaignsPage';
 import MyCampaignsModal from './components/MyCampaignsModal';
 import AboutSection from './components/AboutSection';
 import CreateCampaignModal from './components/campaign/CreateCampaignModal';
+import ContactForm from './components/ContactForm';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 
@@ -364,6 +365,93 @@ export default function App() {
             >
               Start Your Coffee Morning
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Us Section */}
+      <section id="contact" className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Have questions about hosting a coffee morning or need support? We're here to help.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* Contact Form */}
+            <div className="bg-gray-50 rounded-3xl p-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a message</h3>
+              <ContactForm />
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">Get in touch</h3>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  Our team is ready to support you in creating a successful coffee morning. 
+                  Whether you need guidance on planning your event or have questions about our mission, 
+                  we're here to help every step of the way.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="bg-[#009ca3] p-3 rounded-full">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Address</h4>
+                    <p className="text-gray-600">
+                      83A New Street<br />
+                      Killarney, County Kerry<br />
+                      V93 W3KT Ireland
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="bg-[#a8846d] p-3 rounded-full">
+                    <Mail className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
+                    <a 
+                      href="mailto:admin@yspi.ie" 
+                      className="text-[#009ca3] hover:text-[#007a7f] transition-colors"
+                    >
+                      admin@yspi.ie
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="bg-[#009ca3] p-3 rounded-full">
+                    <Phone className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Phone</h4>
+                    <a 
+                      href="tel:1800828888" 
+                      className="text-[#009ca3] hover:text-[#007a7f] transition-colors"
+                    >
+                      1800 828 888
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                <h4 className="font-semibold text-blue-900 mb-2">Office Hours</h4>
+                <div className="text-blue-800 text-sm space-y-1">
+                  <p>Monday - Friday: 9:00 AM - 5:00 PM</p>
+                  <p>Saturday: 10:00 AM - 2:00 PM</p>
+                  <p>Sunday: Closed</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
