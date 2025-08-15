@@ -301,9 +301,10 @@ export default function App() {
                 meaningful conversations over coffee.
               </p>
               <div className="space-y-2 text-sm text-gray-300">
-                <p>Registered Charity No. CHY 20866</p>
+                <p>Registered Charity No. 20070670</p>
+                <p>Address: 83A New Street, Killarney, County Kerry V93 W3KT Ireland</p>
                 <p>Email: admin@yspi.ie</p>
-                <p>Crisis Line: 1800 828 888</p>
+                <p>Phone: 1800 828 888</p>
               </div>
             </div>
 
