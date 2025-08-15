@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, Heart, Menu, X, User, LogOut, ChevronDown, Users, Target, Calendar, MapPin, Clock, Share2, Facebook, Twitter, Instagram, MessageCircle, Mail, Phone, MessageSquare, Send, CheckCircle, Eye, EyeOff, AlertCircle, Package, CreditCard, Lock, ArrowLeft } from 'lucide-react';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from './lib/stripe';
+import { Coffee, AlertCircle } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useCampaigns } from './hooks/useCampaigns';
 import { useAdmin } from './hooks/useAdmin';
-import { supabase } from './lib/supabase';
 import { campaignService } from './services/campaignService';
-import { emailService } from './services/emailService';
-import { messageService } from './services/messageService';
-import { packOrderService } from './services/packOrderService';
-import { irishCounties } from './data/counties';
 import { Campaign } from './types';
 
 import Header from './components/Header';
@@ -21,7 +14,6 @@ import DonationModal from './components/DonationModal';
 import AuthModal from './components/AuthModal';
 import CampaignsPage from './components/CampaignsPage';
 import MyCampaignsModal from './components/MyCampaignsModal';
-import MessageHostModal from './components/MessageHostModal';
 import AboutSection from './components/AboutSection';
 import CreateCampaignModal from './components/campaign/CreateCampaignModal';
 import AdminLogin from './components/admin/AdminLogin';
@@ -278,7 +270,6 @@ export default function App() {
             <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
                 <Coffee className="h-8 w-8 text-[#a8846d]" />
-                <Heart className="h-6 w-6 text-[#009ca3]" />
                 <div>
                   <h3 className="text-lg font-bold text-[#009ca3]">YOUTH SUICIDE PREVENTION IRELAND</h3>
                   <p className="text-sm text-[#a8846d]">Let's Talk Coffee Morning</p>
