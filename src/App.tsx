@@ -284,6 +284,90 @@ export default function App() {
 
       <AboutSection />
 
+      {/* Testimonials Section */}
+      <section className="py-16 bg-green-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">What Our Community Says</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Hear from the amazing people who have hosted coffee mornings and made a real difference
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-white rounded-3xl p-8 shadow-lg">
+              <div className="flex items-center space-x-4 mb-6">
+                <img
+                  src="https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150"
+                  alt="Sarah O'Brien"
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+                <div>
+                  <h4 className="font-bold text-gray-900">Sarah O'Brien</h4>
+                  <p className="text-gray-600 text-sm">Cork</p>
+                </div>
+              </div>
+              <p className="text-gray-700 italic mb-4">
+                "Hosting a coffee morning was one of the most rewarding experiences. We raised €2,400 and brought our community together for such an important cause. The starter pack made everything so easy!"
+              </p>
+              <div className="flex text-yellow-400">
+                {'★'.repeat(5)}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 shadow-lg">
+              <div className="flex items-center space-x-4 mb-6">
+                <img
+                  src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150"
+                  alt="Michael Chen"
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+                <div>
+                  <h4 className="font-bold text-gray-900">Michael Chen</h4>
+                  <p className="text-gray-600 text-sm">Dublin</p>
+                </div>
+              </div>
+              <p className="text-gray-700 italic mb-4">
+                "The support from YSPI was incredible. From the planning materials to the promotional help, everything was provided. We exceeded our goal and had meaningful conversations about mental health."
+              </p>
+              <div className="flex text-yellow-400">
+                {'★'.repeat(5)}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-8 shadow-lg">
+              <div className="flex items-center space-x-4 mb-6">
+                <img
+                  src="https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150"
+                  alt="Emma Walsh"
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+                <div>
+                  <h4 className="font-bold text-gray-900">Emma Walsh</h4>
+                  <p className="text-gray-600 text-sm">Galway</p>
+                </div>
+              </div>
+              <p className="text-gray-700 italic mb-4">
+                "I was nervous about organizing an event, but the step-by-step guide made it simple. Our coffee morning raised €1,800 and created lasting friendships in our community."
+              </p>
+              <div className="flex text-yellow-400">
+                {'★'.repeat(5)}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-gray-600 mb-6">Ready to create your own success story?</p>
+            <button
+              onClick={handleCreateCampaign}
+              className="bg-[#a8846d] text-white px-8 py-4 rounded-full hover:bg-[#96785f] transition-all transform hover:scale-105 font-semibold text-lg shadow-lg"
+            >
+              Start Your Coffee Morning
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
