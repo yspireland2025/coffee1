@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare } from 'lucide-react';
+import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare, Target } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useCampaigns } from './hooks/useCampaigns';
 import { useAdmin } from './hooks/useAdmin';
@@ -362,6 +362,68 @@ export default function App() {
             <button
               onClick={handleCreateCampaign}
               className="bg-[#a8846d] text-white px-8 py-4 rounded-full hover:bg-[#96785f] transition-all transform hover:scale-105 font-semibold text-lg shadow-lg"
+            >
+              Start Your Coffee Morning
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-gradient-to-br from-[#009ca3] to-[#a8846d]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-white mb-4">Our Impact Across Ireland</h2>
+            <p className="text-xl text-white/90 max-w-3xl mx-auto">
+              See how coffee mornings are making a difference in communities nationwide
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
+              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                <Coffee className="h-10 w-10 text-white" />
+              </div>
+              <p className="text-4xl font-bold text-white mb-2">
+                {loading ? '...' : campaigns.length}
+              </p>
+              <p className="text-white/90 text-lg">Active Campaigns</p>
+              <p className="text-white/70 text-sm mt-2">Coffee mornings happening now</p>
+            </div>
+
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
+              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                <MapPin className="h-10 w-10 text-white" />
+              </div>
+              <p className="text-4xl font-bold text-white mb-2">
+                {loading ? '...' : [...new Set(campaigns.map(c => {
+                  const locationParts = c.location.split(',');
+                  return locationParts[locationParts.length - 1]?.trim() || 'Unknown';
+                }))].length}
+              </p>
+              <p className="text-white/90 text-lg">Counties Active</p>
+              <p className="text-white/70 text-sm mt-2">Communities across Ireland</p>
+            </div>
+
+            <div className="text-center bg-white/10 backdrop-blur-sm rounded-3xl p-8">
+              <div className="bg-white/20 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                <Target className="h-10 w-10 text-white" />
+              </div>
+              <p className="text-4xl font-bold text-white mb-2">
+                {loading ? '...' : `€${campaigns.reduce((sum, campaign) => sum + campaign.raisedAmount, 0).toLocaleString()}`}
+              </p>
+              <p className="text-white/90 text-lg">Total Raised</p>
+              <p className="text-white/70 text-sm mt-2">Supporting youth mental health</p>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-white/90 text-lg mb-6">
+              Join these amazing communities making a difference
+            </p>
+            <button
+              onClick={handleCreateCampaign}
+              className="bg-white text-[#009ca3] px-8 py-4 rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 font-semibold text-lg shadow-lg"
             >
               Start Your Coffee Morning
             </button>
