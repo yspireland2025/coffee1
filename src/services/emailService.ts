@@ -509,10 +509,10 @@ class EmailService {
       message: confirmationData.message
     });
   }
-  },
-  contact_form: {
-    subject: 'New contact form submission from {{sender_name}}',
-    html: `
+    },
+    contact_form: {
+      subject: 'New contact form submission from {{sender_name}}',
+      html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">New Contact Message</h1>
@@ -545,10 +545,10 @@ class EmailService {
     </p>
   </div>
 </div>`
-  },
-  contact_confirmation: {
-    subject: 'Thank you for contacting YSPI - We\'ll be in touch soon',
-    html: `
+    },
+    contact_confirmation: {
+      subject: 'Thank you for contacting YSPI - We\'ll be in touch soon',
+      html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Message Received</h1>
@@ -584,6 +584,8 @@ class EmailService {
     </p>
   </div>
 </div>`
+    }
+  };
 
   async sendContactForm(contactData: {
     senderName: string;
