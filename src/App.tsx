@@ -368,6 +368,29 @@ export default function App() {
         </div>
       </section>
 
+      {/* Are You Ready to Proceed Section */}
+      <section className="py-16 bg-gradient-to-br from-[#009ca3] to-[#a8846d]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Are You Ready to Proceed?
+          </h2>
+          <p className="text-xl text-white/90 mb-8 leading-relaxed">
+            Join hundreds of community champions across Ireland who are making a real difference. 
+            Your coffee morning could be the conversation that saves a life.
+          </p>
+          <p className="text-lg text-white/80 mb-12">
+            Every cup of coffee shared, every story told, and every euro raised brings us closer 
+            to a future where no young person feels alone in their struggles.
+          </p>
+          <button
+            onClick={handleCreateCampaign}
+            className="bg-white text-[#009ca3] px-12 py-4 rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 font-bold text-xl shadow-xl"
+          >
+            Start Your Coffee Morning Today
+          </button>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
