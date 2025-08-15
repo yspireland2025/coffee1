@@ -29,7 +29,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
     story: '',
     goalAmount: '',
     eventDate: '',
-    eventTime: '',
+    eventTime: '10:00',
     location: '',
     image: '',
     socialLinks: {
