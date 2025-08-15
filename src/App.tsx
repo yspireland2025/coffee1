@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare, Target, Users } from 'lucide-react';
+import { Coffee, AlertCircle, MapPin, Mail, Phone, MessageSquare, Target, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { useCampaigns } from './hooks/useCampaigns';
 import { useAdmin } from './hooks/useAdmin';
@@ -36,6 +36,7 @@ export default function App() {
   const [showCampaignsPage, setShowCampaignsPage] = useState(false);
   const [showMyCampaigns, setShowMyCampaigns] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   console.log('=== APP STATE ===', {
     isAdmin,
@@ -284,6 +285,70 @@ export default function App() {
       </section>
 
       <AboutSection />
+
+      {/* FAQs Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-xl text-gray-600">
+              Everything you need to know about hosting a coffee morning
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                question: "How much does it cost to get a Coffee Morning starter pack?",
+                answer: "The starter pack is completely free! We only ask for a €10 contribution towards postage costs to get your pack delivered to your door. This includes everything you need: planning guides, promotional materials, information leaflets, and donation collection materials."
+              },
+              {
+                question: "How long does it take for my campaign to be approved?",
+                answer: "Once you've completed your pack payment, your campaign will be reviewed within 24-48 hours. We review each campaign to ensure it meets our guidelines and represents YSPI's mission appropriately. You'll receive an email notification once your campaign is approved and goes live."
+              },
+              {
+                question: "What support do I get when hosting a coffee morning?",
+                answer: "You'll receive comprehensive support including a detailed planning guide, promotional materials, social media templates, and direct access to our support team. We're here to help you every step of the way, from initial planning to post-event follow-up."
+              },
+              {
+                question: "How are donations processed and where does the money go?",
+                answer: "All donations are processed securely through Stripe and go directly to Youth Suicide Prevention Ireland. Donors receive automatic receipts, and 100% of donations support our youth mental health programs including crisis intervention, educational workshops, and community outreach."
+              }
+            ].map((faq, index) => (
+              <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
+                  className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 pr-4">{faq.question}</h3>
+                  {expandedFaq === index ? (
+                    <ChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  )}
+                </button>
+                {expandedFaq === index && (
+                  <div className="px-6 pb-6">
+                    <div className="border-t border-gray-200 pt-4">
+                      <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-gray-600 mb-6">Still have questions?</p>
+            <a 
+              href="#contact"
+              className="border-2 border-[#009ca3] text-[#009ca3] px-8 py-3 rounded-full hover:bg-[#009ca3] hover:text-white transition-colors font-medium inline-block"
+            >
+              Contact Our Team
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* Testimonials Section */}
       <section className="py-16 bg-green-50">
