@@ -133,6 +133,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
           <BasicInfoStep
             formData={campaignData}
             setFormData={setCampaignData}
+            user={user}
           />
         );
       case 2:

@@ -1,13 +1,26 @@
 import React from 'react';
 import { User, Mail, Target } from 'lucide-react';
 import { CampaignFormData } from '../types';
+import { User as AuthUser } from '../../../hooks/useAuth';
 
 interface BasicInfoStepProps {
   formData: CampaignFormData;
   setFormData: (data: CampaignFormData) => void;
+  user?: AuthUser | null;
 }
 
-export default function BasicInfoStep({ formData, setFormData }: BasicInfoStepProps) {
+export default function BasicInfoStep({ formData, setFormData, user }: BasicInfoStepProps) {
+  // Prefill form data with user information if available and fields are empty
+  React.useEffect(() => {
+    if (user && (!formData.organizer || !formData.email)) {
+      setFormData({
+        ...formData,
+        organizer: formData.organizer || user.full_name || user.user_metadata?.full_name || '',
+        email: formData.email || user.email || ''
+      });
+    }
+  }, [user, formData, setFormData]);
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
