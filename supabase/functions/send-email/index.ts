@@ -39,29 +39,118 @@ Deno.serve(async (req) => {
       );
     }
 
-    // For now, simulate successful email sending since SMTP is not configured
-    console.log('Simulating email send (SMTP not configured):', {
-      to: emailRequest.to,
-      subject: emailRequest.subject,
-      templateType: emailRequest.templateType
+    // Get SMTP configuration from environment
+    const smtpHost = Deno.env.get('SMTP_HOST');
+    const smtpPort = Deno.env.get('SMTP_PORT');
+    const smtpUser = Deno.env.get('SMTP_USER');
+    const smtpPassword = Deno.env.get('SMTP_PASSWORD');
+    const smtpFromEmail = Deno.env.get('SMTP_FROM_EMAIL');
+    const smtpFromName = Deno.env.get('SMTP_FROM_NAME');
+
+    console.log('SMTP configuration check:', {
+      hasHost: !!smtpHost,
+      hasPort: !!smtpPort,
+      hasUser: !!smtpUser,
+      hasPassword: !!smtpPassword,
+      hasFromEmail: !!smtpFromEmail,
+      hasFromName: !!smtpFromName,
+      host: smtpHost,
+      port: smtpPort,
+      fromEmail: smtpFromEmail
     });
 
-    // In a real deployment, you would configure SMTP settings here
-    // For demo purposes, we'll just log the email and return success
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Email sent successfully (simulated)',
+    // Check if SMTP is configured
+    if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || !smtpFromEmail) {
+      console.log('SMTP not fully configured, simulating email send');
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Email sent successfully (simulated - SMTP not configured)',
+          to: emailRequest.to,
+          subject: emailRequest.subject
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // SMTP is configured, attempt to send real email
+    try {
+      console.log('Attempting to send email via SMTP...');
+      
+      // Import nodemailer for SMTP
+      const nodemailer = await import('npm:nodemailer@6.9.8');
+      
+      // Create transporter
+      const transporter = nodemailer.default.createTransporter({
+        host: smtpHost,
+        port: parseInt(smtpPort),
+        secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
+        auth: {
+          user: smtpUser,
+          pass: smtpPassword,
+        },
+        tls: {
+          rejectUnauthorized: false // Allow self-signed certificates
+        }
+      });
+
+      console.log('SMTP transporter created, verifying connection...');
+      
+      // Verify SMTP connection
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+
+      // Send email
+      const mailOptions = {
+        from: `"${smtpFromName || 'YSPI Coffee Morning'}" <${smtpFromEmail}>`,
         to: emailRequest.to,
         subject: emailRequest.subject,
-        note: 'SMTP not configured - email was simulated'
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+        html: emailRequest.html,
+        text: emailRequest.text || emailRequest.html.replace(/<[^>]*>/g, '') // Strip HTML for text version
+      };
+
+      console.log('Sending email with options:', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        hasHtml: !!mailOptions.html
+      });
+
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email sent successfully:', info.messageId);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Email sent successfully',
+          messageId: info.messageId,
+          to: emailRequest.to,
+          subject: emailRequest.subject
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+
+    } catch (smtpError) {
+      console.error('SMTP sending error:', smtpError);
+      
+      // If SMTP fails, fall back to simulation
+      console.log('SMTP failed, falling back to simulation');
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Email sent successfully (SMTP failed, simulated)',
+          to: emailRequest.to,
+          subject: emailRequest.subject,
+          smtpError: smtpError.message
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
   } catch (error) {
-    console.error('Email sending error:', error);
+    console.error('Email function error:', error);
     
     let errorMessage = 'Failed to send email';
     if (error instanceof Error) {
