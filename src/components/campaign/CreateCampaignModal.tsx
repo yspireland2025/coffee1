@@ -231,9 +231,11 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       case 4:
         return true; // Social media is optional
       case 5:
+        return true; // Pack selection step - just need to select a pack
+      case 6:
         return shippingAddress.name && shippingAddress.address_line_1 && 
                shippingAddress.city && shippingAddress.county && shippingAddress.eircode && mobileNumber;
-      case 6:
+      case 7:
         return false; // Payment step, no "next" button
       default:
         return false;
