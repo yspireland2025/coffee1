@@ -52,12 +52,12 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
 
   const [selectedPack, setSelectedPack] = useState<'free' | 'medium' | 'large'>('free');
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
-    name: '',
+    name: user?.user_metadata?.full_name || user?.full_name || '',
     address_line_1: '',
     address_line_2: '',
     city: '',
-    county: '',
-    eircode: '',
+    county: user?.user_metadata?.county || '',
+    eircode: user?.user_metadata?.eircode || '',
     country: 'Ireland'
   });
   const [mobileNumber, setMobileNumber] = useState('');
@@ -94,6 +94,15 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       county: authData.county,
       eircode: authData.eircode
     }));
+    
+    // Also prefill shipping address with auth data
+    setShippingAddress(prev => ({
+      ...prev,
+      name: authData.fullName,
+      county: authData.county,
+      eircode: authData.eircode
+    }));
+    
     setCurrentStep(2);
   };
 
