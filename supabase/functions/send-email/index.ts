@@ -78,11 +78,11 @@ Deno.serve(async (req) => {
     try {
       console.log('Attempting to send email via SMTP...');
       
-      // Import nodemailer for SMTP
-      const nodemailer = await import('npm:nodemailer@6.9.8');
+      // Import nodemailer for SMTP - fix the import syntax
+      const nodemailer = (await import('npm:nodemailer@6.9.8')).default;
       
       // Create transporter
-      const transporter = nodemailer.default.createTransporter({
+      const transporter = nodemailer.createTransporter({
         host: smtpHost,
         port: parseInt(smtpPort),
         secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
