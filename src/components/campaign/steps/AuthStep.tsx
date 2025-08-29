@@ -38,7 +38,11 @@ export default function AuthStep({ authData, setAuthData, campaignData, setCampa
           return;
         }
         
-        const { error } = await signUp(authData.email, authData.password, { full_name: authData.fullName });
+        const { error } = await signUp(authData.email, authData.password, { 
+          full_name: authData.fullName,
+          county: authData.county,
+          eircode: authData.eircode
+        });
         if (error) throw error;
         
         onSuccess();
