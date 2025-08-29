@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+let supabase;
+
 console.log('Supabase configuration check:', {
   url: supabaseUrl,
   hasKey: !!supabaseAnonKey,
@@ -42,8 +44,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
     })
   };
   
-  // @ts-ignore
-  export const supabase = mockClient;
+  supabase = mockClient;
 } else {
-  export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
+
+export { supabase };
