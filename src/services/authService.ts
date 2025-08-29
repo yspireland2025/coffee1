@@ -97,13 +97,16 @@ class AuthService {
   }
 
   async register(email: string, password: string, fullName: string): Promise<{ user?: User; error?: string }> {
+  async register(email: string, password: string, fullName: string, county?: string, eircode?: string): Promise<{ user?: User; error?: string }> {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: fullName
+            full_name: fullName,
+            county: county,
+            eircode: eircode
           }
         }
       });
@@ -111,6 +114,22 @@ class AuthService {
       if (error) throw error;
 
       if (data.user) {
+        // Also store county and eircode in users table if provided
+        if (county || eircode) {
+          try {
+            await supabase
+              .from('users')
+              .update({
+                county: county || null,
+                eircode: eircode || null
+              })
+              .eq('id', data.user.id);
+          } catch (updateError) {
+            console.warn('Failed to update user location data:', updateError);
+            // Don't fail registration if location update fails
+          }
+        }
+
         this.currentUser = this.formatUser(data.user);
         return { user: this.currentUser };
       }

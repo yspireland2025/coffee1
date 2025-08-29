@@ -106,7 +106,13 @@ export function useAuth() {
   const signUp = async (email: string, password: string, metadata?: any) => {
     console.log('Attempting to sign up user:', email);
     
-    const { user: newUser, error } = await authService.register(email, password, metadata?.full_name || 'User');
+    const { user: newUser, error } = await authService.register(
+      email, 
+      password, 
+      metadata?.full_name || 'User',
+      metadata?.county,
+      metadata?.eircode
+    );
     
     if (error) {
       console.error('Sign up error:', error);
