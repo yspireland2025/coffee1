@@ -89,40 +89,6 @@ export default function AuthStep({ authData, setAuthData, campaignData, setCampa
       <form onSubmit={handleSubmit} className="space-y-4">
         {authMode === 'signup' && (
           <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Campaign Title *
-              </label>
-              <input
-                type="text"
-                required
-                value={campaignData.title}
-                onChange={(e) => setCampaignData({ ...campaignData, title: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="e.g., Sarah's Coffee Morning for Hope"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Story *
-              </label>
-              <textarea
-                required
-                rows={3}
-                value={campaignData.story}
-                onChange={(e) => setCampaignData({ ...campaignData, story: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Tell people why this cause matters to you. Personal stories create stronger connections.
-              </p>
-            </div>
-          </>
-        )}
-
-        {authMode === 'signup' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <User className="inline h-4 w-4 mr-1" />

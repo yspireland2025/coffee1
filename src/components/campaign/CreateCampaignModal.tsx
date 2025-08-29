@@ -86,15 +86,6 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   };
 
   const handleAuthSuccess = () => {
-    // Pre-fill campaign data with auth data
-    setCampaignData(prev => ({
-      ...prev,
-      email: authData.email,
-      organizer: authData.fullName,
-      county: authData.county,
-      eircode: authData.eircode
-    }));
-    
     // Also prefill shipping address with auth data
     setShippingAddress(prev => ({
       ...prev,
@@ -146,6 +137,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
           <BasicInfoStep
             formData={campaignData}
             setFormData={setCampaignData}
+            user={user}
             user={user}
           />
         );

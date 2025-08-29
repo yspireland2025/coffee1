@@ -1,13 +1,26 @@
 import React from 'react';
 import { User, Mail, Target } from 'lucide-react';
 import { CampaignFormData } from '../types';
+import { User as AuthUser } from '../../../services/authService';
 
 interface BasicInfoStepProps {
   formData: CampaignFormData;
   setFormData: (data: CampaignFormData) => void;
+  user?: AuthUser | null;
 }
 
-export default function BasicInfoStep({ formData, setFormData }: BasicInfoStepProps) {
+export default function BasicInfoStep({ formData, setFormData, user }: BasicInfoStepProps) {
+  // Pre-fill organizer and email from user data if available
+  React.useEffect(() => {
+    if (user && !formData.organizer) {
+      setFormData({
+        ...formData,
+        organizer: user.user_metadata?.full_name || user.full_name || '',
+        email: user.email || ''
+      });
+    }
+  }, [user, formData, setFormData]);
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -43,7 +56,11 @@ export default function BasicInfoStep({ formData, setFormData }: BasicInfoStepPr
             onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
             className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
             placeholder="Your full name"
+            readOnly={!!user}
           />
+          {user && (
+            <p className="text-xs text-gray-500 mt-1">This is pre-filled from your account</p>
+          )}
         </div>
 
         <div>
@@ -58,7 +75,11 @@ export default function BasicInfoStep({ formData, setFormData }: BasicInfoStepPr
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
             placeholder="your.email@example.com"
+            readOnly={!!user}
           />
+          {user && (
+            <p className="text-xs text-gray-500 mt-1">This is pre-filled from your account</p>
+          )}
         </div>
       </div>
 
