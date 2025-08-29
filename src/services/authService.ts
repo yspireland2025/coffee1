@@ -96,7 +96,6 @@ class AuthService {
     }
   }
 
-  async register(email: string, password: string, fullName: string): Promise<{ user?: User; error?: string }> {
   async register(email: string, password: string, fullName: string, county?: string, eircode?: string): Promise<{ user?: User; error?: string }> {
     try {
       const { data, error } = await supabase.auth.signUp({
