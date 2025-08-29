@@ -103,6 +103,7 @@ export default function AuthStep({ authData, setAuthData, campaignData, setCampa
               placeholder="Enter your full name"
             />
           </div>
+          </>
         )}
 
         <div className="grid md:grid-cols-2 gap-4">
