@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { User, Mail, MapPin, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { irishCounties } from '../../../data/counties';
-import { AuthFormData } from '../types';
+import { AuthFormData, CampaignFormData } from '../types';
 
 interface AuthStepProps {
   authData: AuthFormData;
   setAuthData: (data: AuthFormData) => void;
+  campaignData: CampaignFormData;
+  setCampaignData: (data: CampaignFormData) => void;
   onSuccess: () => void;
 }
 
-export default function AuthStep({ authData, setAuthData, onSuccess }: AuthStepProps) {
+export default function AuthStep({ authData, setAuthData, campaignData, setCampaignData, onSuccess }: AuthStepProps) {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,6 +35,14 @@ export default function AuthStep({ authData, setAuthData, onSuccess }: AuthStepP
         }
         if (!authData.county) {
           setError('Please select your county');
+          return;
+        }
+        if (!campaignData.title) {
+          setError('Please enter your campaign title');
+          return;
+        }
+        if (!campaignData.story) {
+          setError('Please tell us your story');
           return;
         }
         
@@ -61,7 +71,7 @@ export default function AuthStep({ authData, setAuthData, onSuccess }: AuthStepP
         </h3>
         <p className="text-gray-600">
           {authMode === 'signup' 
-            ? 'Create an account to manage your coffee morning campaign'
+            ? 'Tell us about your campaign and create your account'
             : 'Sign in to your existing account'
           }
         </p>
@@ -77,6 +87,41 @@ export default function AuthStep({ authData, setAuthData, onSuccess }: AuthStepP
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {authMode === 'signup' && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Campaign Title *
+              </label>
+              <input
+                type="text"
+                required
+                value={campaignData.title}
+                onChange={(e) => setCampaignData({ ...campaignData, title: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="e.g., Sarah's Coffee Morning for Hope"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Your Story *
+              </label>
+              <textarea
+                required
+                rows={3}
+                value={campaignData.story}
+                onChange={(e) => setCampaignData({ ...campaignData, story: e.target.value })}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Tell people why this cause matters to you. Personal stories create stronger connections.
+              </p>
+            </div>
+          </>
+        )}
+
         {authMode === 'signup' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

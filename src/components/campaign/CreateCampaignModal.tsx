@@ -131,6 +131,8 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
         <AuthStep
           authData={authData}
           setAuthData={setAuthData}
+          campaignData={campaignData}
+          setCampaignData={setCampaignData}
           onSuccess={handleAuthSuccess}
         />
       );
