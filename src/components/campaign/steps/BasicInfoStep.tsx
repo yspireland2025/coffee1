@@ -1,8 +1,7 @@
 import React from 'react';
-import { User, Mail, Target, MapPin } from 'lucide-react';
+import { User, Mail, Target, FileText } from 'lucide-react';
 import { CampaignFormData } from '../types';
 import { User as AuthUser } from '../../../services/authService';
-import { irishCounties } from '../../../data/counties';
 
 interface BasicInfoStepProps {
   formData: CampaignFormData;
@@ -17,9 +16,7 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
       setFormData({
         ...formData,
         organizer: user.user_metadata?.full_name || user.full_name || '',
-        email: user.email || '',
-        county: user.user_metadata?.county || formData.county || '',
-        eircode: user.user_metadata?.eircode || formData.eircode || ''
+        email: user.email || ''
       });
     }
   }, [user, formData, setFormData]);
@@ -48,6 +45,7 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
+          <FileText className="inline h-4 w-4 mr-1" />
           Your Story *
         </label>
         <textarea
@@ -61,21 +59,6 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
         <p className="text-sm text-gray-500 mt-1">
           Tell people why this cause matters to you. Personal stories create stronger connections.
         </p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          <Target className="inline h-4 w-4 mr-1" />
-          Campaign Title *
-        </label>
-        <input
-          type="text"
-          required
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          placeholder="e.g., Sarah's Coffee Morning for Hope"
-        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
