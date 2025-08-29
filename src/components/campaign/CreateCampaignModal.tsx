@@ -215,9 +215,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
 
     switch (adjustedStep) {
       case 1:
-        return campaignData.title && campaignData.organizer && campaignData.email && campaignData.story;
+        return campaignData.title && campaignData.organizer && campaignData.email && campaignData.story && campaignData.county && campaignData.eircode;
       case 2:
-        return campaignData.county && campaignData.location && campaignData.eventDate && campaignData.eventTime && campaignData.eircode;
+        return campaignData.location && campaignData.eventDate && campaignData.eventTime;
       case 3:
         return campaignData.goalAmount && parseInt(campaignData.goalAmount) >= 100;
       case 4:

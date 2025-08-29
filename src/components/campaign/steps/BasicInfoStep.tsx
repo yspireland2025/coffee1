@@ -1,7 +1,8 @@
 import React from 'react';
-import { User, Mail, Target } from 'lucide-react';
+import { User, Mail, Target, MapPin } from 'lucide-react';
 import { CampaignFormData } from '../types';
 import { User as AuthUser } from '../../../services/authService';
+import { irishCounties } from '../../../data/counties';
 
 interface BasicInfoStepProps {
   formData: CampaignFormData;
@@ -12,11 +13,13 @@ interface BasicInfoStepProps {
 export default function BasicInfoStep({ formData, setFormData, user }: BasicInfoStepProps) {
   // Pre-fill organizer and email from user data if available
   React.useEffect(() => {
-    if (user && !formData.organizer) {
+    if (user && (!formData.organizer || !formData.email)) {
       setFormData({
         ...formData,
         organizer: user.user_metadata?.full_name || user.full_name || '',
-        email: user.email || ''
+        email: user.email || '',
+        county: user.user_metadata?.county || formData.county || '',
+        eircode: user.user_metadata?.eircode || formData.eircode || ''
       });
     }
   }, [user, formData, setFormData]);
@@ -26,6 +29,38 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
       <div className="text-center mb-8">
         <h3 className="text-xl font-bold text-gray-900 mb-2">Tell Us About Your Coffee Morning</h3>
         <p className="text-gray-600">Share your story and inspire others to support your cause</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          <Target className="inline h-4 w-4 mr-1" />
+          Campaign Title *
+        </label>
+        <input
+          type="text"
+          required
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="e.g., Sarah's Coffee Morning for Hope"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Your Story *
+        </label>
+        <textarea
+          required
+          rows={4}
+          value={formData.story}
+          onChange={(e) => setFormData({ ...formData, story: e.target.value })}
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
+        />
+        <p className="text-sm text-gray-500 mt-1">
+          Tell people why this cause matters to you. Personal stories create stronger connections.
+        </p>
       </div>
 
       <div>
@@ -83,21 +118,45 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Your Story *
-        </label>
-        <textarea
-          required
-          rows={4}
-          value={formData.story}
-          onChange={(e) => setFormData({ ...formData, story: e.target.value })}
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
-        />
-        <p className="text-sm text-gray-500 mt-1">
-          Tell people why this cause matters to you. Personal stories create stronger connections.
-        </p>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <MapPin className="inline h-4 w-4 mr-1" />
+            County *
+          </label>
+          <select
+            required
+            value={formData.county}
+            onChange={(e) => setFormData({ ...formData, county: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          >
+            <option value="">Select Your County</option>
+            {irishCounties.map((county) => (
+              <option key={county} value={county}>{county}</option>
+            ))}
+          </select>
+          {user && (
+            <p className="text-xs text-gray-500 mt-1">Pre-filled from your account</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Eircode *
+          </label>
+          <input
+            type="text"
+            required
+            value={formData.eircode}
+            onChange={(e) => setFormData({ ...formData, eircode: e.target.value.toUpperCase() })}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            placeholder="A65 F4E2"
+            maxLength={8}
+          />
+          {user && (
+            <p className="text-xs text-gray-500 mt-1">Pre-filled from your account</p>
+          )}
+        </div>
       </div>
     </div>
   );
