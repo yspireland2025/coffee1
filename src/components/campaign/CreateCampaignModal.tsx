@@ -103,8 +103,8 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       eircode: authData.eircode
     }));
     
-    // Move to step 2 which will be BasicInfoStep for new users
-    setCurrentStep(2);
+    // Move to step 1 for authenticated users (BasicInfoStep)
+    setCurrentStep(1);
   };
 
   const handleCampaignSubmit = async () => {
