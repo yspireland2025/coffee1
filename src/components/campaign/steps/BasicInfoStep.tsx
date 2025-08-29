@@ -117,47 +117,6 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
           )}
         </div>
       </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            <MapPin className="inline h-4 w-4 mr-1" />
-            County *
-          </label>
-          <select
-            required
-            value={formData.county}
-            onChange={(e) => setFormData({ ...formData, county: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            <option value="">Select Your County</option>
-            {irishCounties.map((county) => (
-              <option key={county} value={county}>{county}</option>
-            ))}
-          </select>
-          {user && (
-            <p className="text-xs text-gray-500 mt-1">Pre-filled from your account</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Eircode *
-          </label>
-          <input
-            type="text"
-            required
-            value={formData.eircode}
-            onChange={(e) => setFormData({ ...formData, eircode: e.target.value.toUpperCase() })}
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="A65 F4E2"
-            maxLength={8}
-          />
-          {user && (
-            <p className="text-xs text-gray-500 mt-1">Pre-filled from your account</p>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

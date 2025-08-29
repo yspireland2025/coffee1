@@ -14,6 +14,44 @@ export default function EventDetailsStep({ formData, setFormData }: EventDetails
       <div className="text-center mb-8">
         <h3 className="text-xl font-bold text-gray-900 mb-2">Event Details</h3>
         <p className="text-gray-600">When and where will your coffee morning take place?</p>
+        <p className="text-sm text-gray-500 mt-1">This is the location where your event will be held (may be different from your home address)</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <MapPin className="inline h-4 w-4 mr-1" />
+            Event County *
+          </label>
+          <select
+            required
+            value={formData.county}
+            onChange={(e) => setFormData({ ...formData, county: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          >
+            <option value="">Select Event County</option>
+            {irishCounties.map((county) => (
+              <option key={county} value={county}>{county}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">County where your coffee morning will take place</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Event Area Eircode *
+          </label>
+          <input
+            type="text"
+            required
+            value={formData.eircode}
+            onChange={(e) => setFormData({ ...formData, eircode: e.target.value.toUpperCase() })}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            placeholder="A65 F4E2"
+            maxLength={8}
+          />
+          <p className="text-xs text-gray-500 mt-1">Eircode for the event area (helps with local promotion)</p>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -53,7 +91,7 @@ export default function EventDetailsStep({ formData, setFormData }: EventDetails
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           <MapPin className="inline h-4 w-4 mr-1" />
-          Event Location *
+          Specific Event Location *
         </label>
         <input
           type="text"
@@ -63,6 +101,7 @@ export default function EventDetailsStep({ formData, setFormData }: EventDetails
           className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
           placeholder="e.g., Community Centre, Main Street, Cork"
         />
+        <p className="text-xs text-gray-500 mt-1">Specific venue name and address for your coffee morning</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
