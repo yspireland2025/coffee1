@@ -98,6 +98,8 @@ class AuthService {
 
   async register(email: string, password: string, fullName: string, county?: string, eircode?: string): Promise<{ user?: User; error?: string }> {
     try {
+      console.log('AuthService: Starting registration process for:', email);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -113,20 +115,33 @@ class AuthService {
       if (error) throw error;
 
       if (data.user) {
-        // Also store county and eircode in users table if provided
-        if (county || eircode) {
-          try {
-            await supabase
-              .from('users')
-              .update({
-                county: county || null,
-                eircode: eircode || null
-              })
-              .eq('id', data.user.id);
-          } catch (updateError) {
-            console.warn('Failed to update user location data:', updateError);
-            // Don't fail registration if location update fails
+        console.log('AuthService: Supabase auth user created, now creating users table record');
+        
+        // Create record in our users table
+        try {
+          const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: email.toLowerCase(),
+              full_name: fullName,
+              county: county || null,
+              eircode: eircode || null,
+              role: 'user',
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (insertError) {
+            console.error('Failed to create user record in users table:', insertError);
+            // Don't fail registration if users table insert fails, but log it
+            console.warn('User was created in auth but not in users table - this may cause issues');
+          } else {
+            console.log('AuthService: User record created successfully in users table');
           }
+        } catch (insertError) {
+          console.error('Exception creating user record:', insertError);
         }
 
         this.currentUser = this.formatUser(data.user);
