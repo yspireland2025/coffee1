@@ -5,12 +5,13 @@ import { stripePromise } from '../../../lib/stripe';
 import PackPaymentForm from '../../PackPaymentForm';
 import { packOrderService } from '../../../services/packOrderService';
 import { emailService } from '../../../services/emailService';
-import { CampaignFormData, ShippingAddress } from '../types';
+import { CampaignFormData, ShippingAddress, TshirtSizes } from '../types';
 
 interface PaymentStepProps {
   campaignData: CampaignFormData;
   selectedPack: 'free' | 'medium' | 'large';
   shippingAddress: ShippingAddress;
+  tshirtSizes: TshirtSizes;
   createdCampaign: any;
   createdPackOrder: any;
   setCreatedPackOrder: (order: any) => void;
@@ -27,6 +28,7 @@ export default function PaymentStep({
   campaignData,
   selectedPack,
   shippingAddress,
+  tshirtSizes,
   createdCampaign,
   createdPackOrder,
   setCreatedPackOrder,
@@ -50,6 +52,7 @@ export default function PaymentStep({
         userId: createdCampaign.user_id,
         packType: selectedPack,
         amount: packOptions.find(p => p.id === selectedPack)!.price * 100,
+        tshirtSizes: (selectedPack === 'medium' || selectedPack === 'large') ? tshirtSizes : null,
         shippingAddress,
         mobileNumber: shippingAddress.name // Using name as mobile for now
       };
