@@ -137,11 +137,12 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       );
     }
 
-    // For logged-in users: currentStep maps directly to step numbers
-    // For new users: currentStep 2 = BasicInfo, 3 = EventDetails, etc.
-    const stepNumber = isAuthenticated ? currentStep : currentStep - 1;
+    // Calculate the actual step number based on authentication status
+    // For authenticated users: step 1 = BasicInfo, step 2 = EventDetails, etc.
+    // For non-authenticated users: step 2 = BasicInfo, step 3 = EventDetails, etc.
+    const actualStepNumber = isAuthenticated ? currentStep : currentStep - 1;
 
-    switch (stepNumber) {
+    switch (actualStepNumber) {
       case 1:
         return (
           <BasicInfoStep
@@ -204,9 +205,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   const getStepTitle = () => {
     if (!isAuthenticated && currentStep === 1) return 'Account Setup';
     
-    const stepNumber = isAuthenticated ? currentStep : currentStep - 1;
+    const actualStepNumber = isAuthenticated ? currentStep : currentStep - 1;
     
-    switch (stepNumber) {
+    switch (actualStepNumber) {
       case 1: return 'Basic Information';
       case 2: return 'Event Details';
       case 3: return 'Fundraising Goal';
@@ -222,9 +223,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       return false; // AuthStep handles its own validation
     }
 
-    const stepNumber = isAuthenticated ? currentStep : currentStep - 1;
+    const actualStepNumber = isAuthenticated ? currentStep : currentStep - 1;
 
-    switch (stepNumber) {
+    switch (actualStepNumber) {
       case 1:
         return campaignData.title && campaignData.organizer && campaignData.email && campaignData.story;
       case 2:
