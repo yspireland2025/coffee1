@@ -127,15 +127,16 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       );
     }
 
-    const adjustedStep = user ? currentStep : currentStep - 1;
+    // For logged-in users: currentStep maps directly
+    // For new users: currentStep 2+ maps to steps 1+
+    const stepNumber = user ? currentStep : currentStep - 1;
 
-    switch (adjustedStep) {
+    switch (stepNumber) {
       case 1:
         return (
           <BasicInfoStep
             formData={campaignData}
             setFormData={setCampaignData}
-            user={user}
             user={user}
           />
         );
@@ -193,9 +194,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   const getStepTitle = () => {
     if (!user && currentStep === 1) return 'Account Setup';
     
-    const adjustedStep = user ? currentStep : currentStep - 1;
+    const stepNumber = user ? currentStep : currentStep - 1;
     
-    switch (adjustedStep) {
+    switch (stepNumber) {
       case 1: return 'Basic Information';
       case 2: return 'Event Details';
       case 3: return 'Fundraising Goal';
@@ -211,9 +212,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       return false; // AuthStep handles its own validation
     }
 
-    const adjustedStep = user ? currentStep : currentStep - 1;
+    const stepNumber = user ? currentStep : currentStep - 1;
 
-    switch (adjustedStep) {
+    switch (stepNumber) {
       case 1:
         return campaignData.title && campaignData.organizer && campaignData.email && campaignData.story;
       case 2:
@@ -227,8 +228,6 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       case 6:
         return shippingAddress.name && shippingAddress.address_line_1 && 
                shippingAddress.city && shippingAddress.county && shippingAddress.eircode && mobileNumber;
-      case 7:
-        return false; // Payment step, no "next" button
       default:
         return false;
     }
