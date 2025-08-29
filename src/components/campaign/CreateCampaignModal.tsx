@@ -102,9 +102,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       const campaignSubmitData = {
         ...campaignData,
         goalAmount: parseInt(campaignData.goalAmount),
-        userId: user?.id,
-        county: user.user_metadata?.county || '',
-        eircode: user.user_metadata?.eircode || ''
+        userId: user?.id
       };
       
       const createdCampaign = await onSubmit(campaignSubmitData);
