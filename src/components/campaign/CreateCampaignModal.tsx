@@ -19,6 +19,7 @@ interface CreateCampaignModalProps {
 export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaignModalProps) {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!user);
   
   const [campaignData, setCampaignData] = useState<CampaignFormData>({
     title: '',
@@ -71,7 +72,12 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   const [createdCampaign, setCreatedCampaign] = useState<any>(null);
   const [createdPackOrder, setCreatedPackOrder] = useState<any>(null);
 
-  const totalSteps = user ? 6 : 7;
+  const totalSteps = isAuthenticated ? 6 : 7;
+
+  // Update authentication state when user changes
+  React.useEffect(() => {
+    setIsAuthenticated(!!user);
+  }, [user]);
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -86,6 +92,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   };
 
   const handleAuthSuccess = () => {
+    // Mark as authenticated immediately
+    setIsAuthenticated(true);
+    
     // Also prefill shipping address with auth data
     setShippingAddress(prev => ({
       ...prev,
@@ -116,7 +125,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
 
   const renderCurrentStep = () => {
     // Step 1: Authentication (only if not logged in)
-    if (!user && currentStep === 1) {
+    if (!isAuthenticated && currentStep === 1) {
       return (
         <AuthStep
           authData={authData}
@@ -130,7 +139,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
 
     // For logged-in users: currentStep maps directly to step numbers
     // For new users: currentStep 2 = BasicInfo, 3 = EventDetails, etc.
-    const stepNumber = user ? currentStep : currentStep - 1;
+    const stepNumber = isAuthenticated ? currentStep : currentStep - 1;
 
     switch (stepNumber) {
       case 1:
@@ -193,9 +202,9 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   };
 
   const getStepTitle = () => {
-    if (!user && currentStep === 1) return 'Account Setup';
+    if (!isAuthenticated && currentStep === 1) return 'Account Setup';
     
-    const stepNumber = user ? currentStep : currentStep - 1;
+    const stepNumber = isAuthenticated ? currentStep : currentStep - 1;
     
     switch (stepNumber) {
       case 1: return 'Basic Information';
@@ -209,11 +218,11 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   };
 
   const canProceed = () => {
-    if (!user && currentStep === 1) {
+    if (!isAuthenticated && currentStep === 1) {
       return false; // AuthStep handles its own validation
     }
 
-    const stepNumber = user ? currentStep : currentStep - 1;
+    const stepNumber = isAuthenticated ? currentStep : currentStep - 1;
 
     switch (stepNumber) {
       case 1:
