@@ -98,7 +98,7 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <User className="inline h-4 w-4 mr-1" />
-            Your Name *
+            Organizer Name *
           </label>
           <input
             type="text"
@@ -106,18 +106,17 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
             value={formData.organizer}
             onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
             className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="Your full name"
-            readOnly={!!user}
+            placeholder="Name of the person organizing this coffee morning"
           />
-          {user && (
-            <p className="text-xs text-gray-500 mt-1">This is pre-filled from your account</p>
-          )}
+          <p className="text-xs text-gray-500 mt-1">
+            {user ? 'Pre-filled from your account - you can change this if someone else is organizing' : 'Full name of the coffee morning organizer'}
+          </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <Mail className="inline h-4 w-4 mr-1" />
-            Email Address *
+            Organizer Email *
           </label>
           <input
             type="email"
@@ -125,12 +124,11 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="your.email@example.com"
-            readOnly={!!user}
+            placeholder="organizer@example.com"
           />
-          {user && (
-            <p className="text-xs text-gray-500 mt-1">This is pre-filled from your account</p>
-          )}
+          <p className="text-xs text-gray-500 mt-1">
+            {user ? 'Pre-filled from your account - you can change this if someone else is organizing' : 'Email address for the coffee morning organizer'}
+          </p>
         </div>
       </div>
     </div>
