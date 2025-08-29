@@ -94,6 +94,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       eircode: authData.eircode
     }));
     
+    // Move to step 2 which will be BasicInfoStep for new users
     setCurrentStep(2);
   };
 
@@ -127,8 +128,8 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       );
     }
 
-    // For logged-in users: currentStep maps directly
-    // For new users: currentStep 2+ maps to steps 1+
+    // For logged-in users: currentStep maps directly to step numbers
+    // For new users: currentStep 2 = BasicInfo, 3 = EventDetails, etc.
     const stepNumber = user ? currentStep : currentStep - 1;
 
     switch (stepNumber) {
