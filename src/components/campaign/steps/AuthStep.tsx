@@ -37,14 +37,6 @@ export default function AuthStep({ authData, setAuthData, campaignData, setCampa
           setError('Please select your county');
           return;
         }
-        if (!campaignData.title) {
-          setError('Please enter your campaign title');
-          return;
-        }
-        if (!campaignData.story) {
-          setError('Please tell us your story');
-          return;
-        }
         
         const { error } = await signUp(authData.email, authData.password, { full_name: authData.fullName });
         if (error) throw error;
