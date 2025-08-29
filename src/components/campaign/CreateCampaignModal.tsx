@@ -137,43 +137,84 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       );
     }
 
-    // Calculate the actual step number based on authentication status
     // For authenticated users: step 1 = BasicInfo, step 2 = EventDetails, etc.
     // For non-authenticated users: step 2 = BasicInfo, step 3 = EventDetails, etc.
-    const actualStepNumber = isAuthenticated ? currentStep : currentStep - 1;
-
-    switch (actualStepNumber) {
+    switch (currentStep) {
       case 1:
-        return (
+        return isAuthenticated ? (
+          <BasicInfoStep
+            formData={campaignData}
+            setFormData={setCampaignData}
+            user={user}
+          />
+        ) : null;
+      case 2:
+        return isAuthenticated ? (
+          <EventDetailsStep
+            formData={campaignData}
+            setFormData={setCampaignData}
+          />
+        ) : (
           <BasicInfoStep
             formData={campaignData}
             setFormData={setCampaignData}
             user={user}
           />
         );
-      case 2:
-        return (
+      case 3:
+        return isAuthenticated ? (
+          <FundraisingGoalStep
+            formData={campaignData}
+            setFormData={setCampaignData}
+          />
+        ) : (
           <EventDetailsStep
             formData={campaignData}
             setFormData={setCampaignData}
           />
         );
-      case 3:
-        return (
+      case 4:
+        return isAuthenticated ? (
+          <SocialMediaStep
+            formData={campaignData}
+            setFormData={setCampaignData}
+          />
+        ) : (
           <FundraisingGoalStep
             formData={campaignData}
             setFormData={setCampaignData}
           />
         );
-      case 4:
-        return (
+      case 5:
+        return isAuthenticated ? (
+          <PackSelectionStep
+            selectedPack={selectedPack}
+            setSelectedPack={setSelectedPack}
+            shippingAddress={shippingAddress}
+            setShippingAddress={setShippingAddress}
+            mobileNumber={mobileNumber}
+            setMobileNumber={setMobileNumber}
+            tshirtSizes={tshirtSizes}
+            setTshirtSizes={setTshirtSizes}
+          />
+        ) : (
           <SocialMediaStep
             formData={campaignData}
             setFormData={setCampaignData}
           />
         );
-      case 5:
-        return (
+      case 6:
+        return isAuthenticated ? (
+          <PaymentStep
+            campaignData={campaignData}
+            selectedPack={selectedPack}
+            shippingAddress={shippingAddress}
+            createdCampaign={createdCampaign}
+            createdPackOrder={createdPackOrder}
+            setCreatedPackOrder={setCreatedPackOrder}
+            onClose={onClose}
+          />
+        ) : (
           <PackSelectionStep
             selectedPack={selectedPack}
             setSelectedPack={setSelectedPack}
@@ -185,8 +226,8 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
             setTshirtSizes={setTshirtSizes}
           />
         );
-      case 6:
-        return (
+      case 7:
+        return !isAuthenticated ? (
           <PaymentStep
             campaignData={campaignData}
             selectedPack={selectedPack}
@@ -196,7 +237,7 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
             setCreatedPackOrder={setCreatedPackOrder}
             onClose={onClose}
           />
-        );
+        ) : null;
       default:
         return null;
     }
@@ -205,15 +246,14 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
   const getStepTitle = () => {
     if (!isAuthenticated && currentStep === 1) return 'Account Setup';
     
-    const actualStepNumber = isAuthenticated ? currentStep : currentStep - 1;
-    
-    switch (actualStepNumber) {
+    switch (currentStep) {
       case 1: return 'Basic Information';
-      case 2: return 'Event Details';
-      case 3: return 'Fundraising Goal';
-      case 4: return 'Social Media';
-      case 5: return 'Pack Selection';
-      case 6: return 'Payment';
+      case 2: return isAuthenticated ? 'Event Details' : 'Basic Information';
+      case 3: return isAuthenticated ? 'Fundraising Goal' : 'Event Details';
+      case 4: return isAuthenticated ? 'Social Media' : 'Fundraising Goal';
+      case 5: return isAuthenticated ? 'Pack Selection' : 'Social Media';
+      case 6: return isAuthenticated ? 'Payment' : 'Pack Selection';
+      case 7: return 'Payment';
       default: return 'Create Campaign';
     }
   };
@@ -223,22 +263,35 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       return false; // AuthStep handles its own validation
     }
 
-    const actualStepNumber = isAuthenticated ? currentStep : currentStep - 1;
-
-    switch (actualStepNumber) {
+    switch (currentStep) {
       case 1:
-        return campaignData.title && campaignData.organizer && campaignData.email && campaignData.story;
+        return isAuthenticated ? (campaignData.title && campaignData.organizer && campaignData.email && campaignData.story) : false;
       case 2:
-        return campaignData.location && campaignData.eventDate && campaignData.eventTime && campaignData.county && campaignData.eircode;
+        return isAuthenticated ? 
+          (campaignData.location && campaignData.eventDate && campaignData.eventTime && campaignData.county && campaignData.eircode) :
+          (campaignData.title && campaignData.organizer && campaignData.email && campaignData.story);
       case 3:
-        return campaignData.goalAmount && parseInt(campaignData.goalAmount) >= 100;
+        return isAuthenticated ?
+          (campaignData.goalAmount && parseInt(campaignData.goalAmount) >= 100) :
+          (campaignData.location && campaignData.eventDate && campaignData.eventTime && campaignData.county && campaignData.eircode);
       case 4:
-        return true; // Social media is optional
+        return isAuthenticated ? 
+          true : // Social media is optional
+          (campaignData.goalAmount && parseInt(campaignData.goalAmount) >= 100);
       case 5:
-        return true; // Pack selection step - just need to select a pack
+        return isAuthenticated ?
+          true : // Pack selection step - just need to select a pack
+          true; // Social media is optional
       case 6:
-        return shippingAddress.name && shippingAddress.address_line_1 && 
-               shippingAddress.city && shippingAddress.county && shippingAddress.eircode && mobileNumber;
+        return isAuthenticated ?
+          (shippingAddress.name && shippingAddress.address_line_1 && 
+           shippingAddress.city && shippingAddress.county && shippingAddress.eircode && mobileNumber) :
+          true; // Pack selection step - just need to select a pack
+      case 7:
+        return !isAuthenticated ? 
+          (shippingAddress.name && shippingAddress.address_line_1 && 
+           shippingAddress.city && shippingAddress.county && shippingAddress.eircode && mobileNumber) :
+          false;
       default:
         return false;
     }
