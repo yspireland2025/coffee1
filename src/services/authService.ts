@@ -115,34 +115,7 @@ class AuthService {
       if (error) throw error;
 
       if (data.user) {
-        console.log('AuthService: Supabase auth user created, now creating users table record');
-        
-        // Create record in our users table
-        try {
-          const { error: insertError } = await supabase
-            .from('users')
-            .insert({
-              id: data.user.id,
-              email: email.toLowerCase(),
-              full_name: fullName,
-              county: county || null,
-              eircode: eircode || null,
-              role: 'user',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-
-          if (insertError) {
-            console.error('Failed to create user record in users table:', insertError);
-            // Don't fail registration if users table insert fails, but log it
-            console.warn('User was created in auth but not in users table - this may cause issues');
-          } else {
-            console.log('AuthService: User record created successfully in users table');
-          }
-        } catch (insertError) {
-          console.error('Exception creating user record:', insertError);
-        }
+        console.log('AuthService: Supabase auth user created successfully');
 
         this.currentUser = this.formatUser(data.user);
         return { user: this.currentUser };
