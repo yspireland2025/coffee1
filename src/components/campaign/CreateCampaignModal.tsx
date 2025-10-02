@@ -129,7 +129,6 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
       return (
         <AuthStep
           authData={authData}
-         tshirtSizes={tshirtSizes}
           setAuthData={setAuthData}
           campaignData={campaignData}
           setCampaignData={setCampaignData}
@@ -142,7 +141,6 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
     // For non-authenticated users: step 2 = BasicInfo, step 3 = EventDetails, etc.
     switch (currentStep) {
       case 1:
-         tshirtSizes={tshirtSizes}
         return isAuthenticated ? (
           <BasicInfoStep
             formData={campaignData}
