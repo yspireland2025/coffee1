@@ -11,11 +11,10 @@ interface CampaignMapProps {
   zoom?: number;
 }
 
-let cachedApiKey: string | null = null;
-
 async function getGoogleMapsApiKey(): Promise<string> {
-  if (cachedApiKey) {
-    return cachedApiKey;
+  const cachedKey = sessionStorage.getItem('google_maps_api_key');
+  if (cachedKey) {
+    return cachedKey;
   }
 
   const { data, error } = await supabase
@@ -34,8 +33,8 @@ async function getGoogleMapsApiKey(): Promise<string> {
     throw new Error('Google Maps API key not found in database');
   }
 
-  cachedApiKey = data.value;
-  return cachedApiKey;
+  sessionStorage.setItem('google_maps_api_key', data.value);
+  return data.value;
 }
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
