@@ -10,7 +10,7 @@ interface CampaignMapProps {
   zoom?: number;
 }
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDWJUaXEfQWqNvafQsj3ecoOxxOU6gTPyE';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve, reject) => {
