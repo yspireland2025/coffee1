@@ -94,9 +94,9 @@ Deno.serve(async (req) => {
     let stripe;
     try {
       console.log('Initializing Stripe...');
-      const Stripe = (await import('npm:stripe@12.0.0')).default;
+      const Stripe = (await import('npm:stripe@17.0.0')).default;
       stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2022-11-15',
+        apiVersion: '2024-11-20.acacia',
       });
       console.log('Stripe initialized successfully');
     } catch (stripeError) {
