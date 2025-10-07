@@ -3,19 +3,25 @@ import { loadStripe } from '@stripe/stripe-js';
 // Get Stripe publishable key from environment variables
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
+const isValidStripeKey = stripePublishableKey &&
+  stripePublishableKey !== 'your_stripe_publishable_key_here' &&
+  (stripePublishableKey.startsWith('pk_test_') || stripePublishableKey.startsWith('pk_live_'));
+
 console.log('Stripe configuration:', {
   hasPublishableKey: !!stripePublishableKey,
-  keyPrefix: stripePublishableKey ? stripePublishableKey.substring(0, 12) + '...' : 'missing',
-  keyType: stripePublishableKey?.startsWith('pk_live_') ? 'live' : 
-           stripePublishableKey?.startsWith('pk_test_') ? 'test' : 'unknown'
+  isValidKey: isValidStripeKey,
+  keyPrefix: isValidStripeKey ? stripePublishableKey.substring(0, 12) + '...' : 'missing or invalid',
+  keyType: stripePublishableKey?.startsWith('pk_live_') ? 'live' :
+           stripePublishableKey?.startsWith('pk_test_') ? 'test' : 'not configured'
 });
 
-if (!stripePublishableKey) {
-  console.error('VITE_STRIPE_PUBLISHABLE_KEY is not set in environment variables');
-  throw new Error('Stripe publishable key is required');
+if (!isValidStripeKey) {
+  console.warn('⚠️ VITE_STRIPE_PUBLISHABLE_KEY is not properly configured. Payments will not work.');
+  console.warn('Please add your Stripe publishable key to .env file');
+  console.warn('Get your key from: https://dashboard.stripe.com/test/apikeys');
 }
 
-export const stripePromise = loadStripe(stripePublishableKey);
+export const stripePromise = isValidStripeKey ? loadStripe(stripePublishableKey) : null;
 
 export const createPaymentIntent = async (amount: number, campaignId: string, donorEmail?: string) => {
   try {

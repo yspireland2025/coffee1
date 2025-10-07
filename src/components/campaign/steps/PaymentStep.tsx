@@ -178,7 +178,29 @@ export default function PaymentStep({
         </div>
       )}
 
-      {stripePromise && createdPackOrder ? (
+      {!stripePromise ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-amber-900 mb-2">Payment System Not Configured</h4>
+              <p className="text-amber-800 text-sm mb-3">
+                Stripe payment processing is not currently configured. Please contact the administrator to complete your payment.
+              </p>
+              <p className="text-amber-700 text-xs">
+                Your campaign and pack order have been created. Once payment is configured, you can complete your order.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : !createdPackOrder ? (
+        <div className="text-center py-8">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-gray-600 font-medium">Preparing payment form...</p>
+          </div>
+        </div>
+      ) : (
         <Elements stripe={stripePromise}>
           <PackPaymentForm
             packOrderId={createdPackOrder.id}
@@ -188,13 +210,6 @@ export default function PaymentStep({
             onError={handlePaymentError}
           />
         </Elements>
-      ) : (
-        <div className="text-center py-8">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-            <Package className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600 font-medium">Preparing payment form...</p>
-          </div>
-        </div>
       )}
     </div>
   );
