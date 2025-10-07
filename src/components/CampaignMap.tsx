@@ -24,8 +24,14 @@ async function getGoogleMapsApiKey(): Promise<string> {
     .eq('key', 'google_maps_api_key')
     .maybeSingle();
 
-  if (error || !data) {
-    throw new Error('Failed to load Google Maps API key');
+  if (error) {
+    console.error('Error fetching API key:', error);
+    throw new Error(`Failed to load Google Maps API key: ${error.message}`);
+  }
+
+  if (!data) {
+    console.error('No API key found in database');
+    throw new Error('Google Maps API key not found in database');
   }
 
   cachedApiKey = data.value;
