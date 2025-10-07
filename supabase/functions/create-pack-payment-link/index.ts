@@ -123,6 +123,77 @@ Deno.serve(async (req) => {
       try {
         console.log('Sending payment link email to:', organizerEmail);
 
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #2d5016; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
+    .button { display: inline-block; background-color: #2d5016; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+    .details { background-color: white; padding: 15px; border-left: 4px solid #2d5016; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Complete Your Pack Payment</h1>
+    </div>
+    <div class="content">
+      <p>Dear ${organizerName},</p>
+
+      <p>Thank you for creating your Coffee Morning campaign! We're excited to help you raise funds for youth projects.</p>
+
+      <div class="details">
+        <strong>Campaign:</strong> ${campaignTitle}<br>
+        <strong>Pack Type:</strong> ${packTypeName}<br>
+        <strong>Amount Due:</strong> €${(packAmount / 100).toFixed(2)}
+      </div>
+
+      <p>To complete your campaign setup and receive your fundraising pack, please complete your payment using the secure link below:</p>
+
+      <div style="text-align: center;">
+        <a href="${paymentLink.url}" class="button">Complete Payment</a>
+      </div>
+
+      <p style="margin-top: 30px;">Once your payment is confirmed, your campaign will be reviewed and approved within 24 hours.</p>
+
+      <p>If you have any questions, please don't hesitate to contact us.</p>
+
+      <p>Best regards,<br>
+      The YSPI Coffee Morning Team</p>
+    </div>
+    <div class="footer">
+      <p>This is an automated email from YSPI Coffee Morning Platform</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+        const emailText = `
+Dear ${organizerName},
+
+Thank you for creating your Coffee Morning campaign! We're excited to help you raise funds for youth projects.
+
+Campaign: ${campaignTitle}
+Pack Type: ${packTypeName}
+Amount Due: €${(packAmount / 100).toFixed(2)}
+
+To complete your campaign setup and receive your fundraising pack, please complete your payment using the secure link below:
+
+${paymentLink.url}
+
+Once your payment is confirmed, your campaign will be reviewed and approved within 24 hours.
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+The YSPI Coffee Morning Team
+`;
+
         const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: 'POST',
           headers: {
@@ -132,14 +203,8 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             to: organizerEmail,
             subject: `Complete Your Coffee Morning Pack Payment - ${campaignTitle}`,
-            template: 'pack_payment_link',
-            data: {
-              organizerName,
-              campaignTitle,
-              packType: packTypeName,
-              amount: (packAmount / 100).toFixed(2),
-              paymentLink: paymentLink.url
-            }
+            html: emailHtml,
+            text: emailText
           })
         });
 
