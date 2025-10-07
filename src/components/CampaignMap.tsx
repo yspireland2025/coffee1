@@ -12,11 +12,14 @@ interface CampaignMapProps {
 }
 
 async function getGoogleMapsApiKey(): Promise<string> {
+  console.log('[getGoogleMapsApiKey] Starting...');
   const cachedKey = sessionStorage.getItem('google_maps_api_key');
   if (cachedKey) {
+    console.log('[getGoogleMapsApiKey] Using cached key');
     return cachedKey;
   }
 
+  console.log('[getGoogleMapsApiKey] Fetching from database...');
   const { data, error } = await supabase
     .from('system_settings')
     .select('value')
@@ -24,57 +27,72 @@ async function getGoogleMapsApiKey(): Promise<string> {
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching API key:', error);
+    console.error('[getGoogleMapsApiKey] Database error:', error);
     throw new Error(`Failed to load Google Maps API key: ${error.message}`);
   }
 
   if (!data) {
-    console.error('No API key found in database');
+    console.error('[getGoogleMapsApiKey] No API key found in database');
     throw new Error('Google Maps API key not found in database');
   }
 
+  console.log('[getGoogleMapsApiKey] Got key from database, caching...');
   sessionStorage.setItem('google_maps_api_key', data.value);
   return data.value;
 }
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    console.log('[loadGoogleMapsScript] Starting...');
+
     if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+      console.log('[loadGoogleMapsScript] Google Maps already loaded');
       resolve();
       return;
     }
 
     if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+      console.log('[loadGoogleMapsScript] Script tag exists, waiting for load...');
       const checkGoogle = setInterval(() => {
         if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+          console.log('[loadGoogleMapsScript] Google Maps loaded (existing script)');
           clearInterval(checkGoogle);
           resolve();
         }
       }, 100);
       setTimeout(() => {
         clearInterval(checkGoogle);
+        console.error('[loadGoogleMapsScript] Timeout waiting for existing script');
         reject(new Error('Google Maps loading timeout'));
       }, 10000);
       return;
     }
 
+    console.log('[loadGoogleMapsScript] Creating new script tag...');
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geocoding&loading=async`;
     script.async = true;
     script.defer = true;
     script.onload = () => {
+      console.log('[loadGoogleMapsScript] Script onload fired, waiting for google.maps...');
       const checkGoogle = setInterval(() => {
         if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+          console.log('[loadGoogleMapsScript] Google Maps loaded successfully');
           clearInterval(checkGoogle);
           resolve();
         }
       }, 50);
       setTimeout(() => {
         clearInterval(checkGoogle);
+        console.error('[loadGoogleMapsScript] Timeout waiting for google.maps initialization');
         reject(new Error('Google Maps initialization timeout'));
       }, 5000);
     };
-    script.onerror = () => reject(new Error('Failed to load Google Maps'));
+    script.onerror = (e) => {
+      console.error('[loadGoogleMapsScript] Script error:', e);
+      reject(new Error('Failed to load Google Maps'));
+    };
+    console.log('[loadGoogleMapsScript] Appending script to head...');
     document.head.appendChild(script);
   });
 }
@@ -93,11 +111,23 @@ export default function CampaignMap({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getGoogleMapsApiKey()
-      .then((apiKey) => loadGoogleMapsScript(apiKey))
-      .then(() => {
-        if (!mapRef.current) return;
+    console.log('[CampaignMap] Starting map initialization');
+    console.log('[CampaignMap] Center:', centerLat, centerLng, 'Zoom:', zoom);
+    console.log('[CampaignMap] Campaigns count:', campaigns.length);
 
+    getGoogleMapsApiKey()
+      .then((apiKey) => {
+        console.log('[CampaignMap] Got API key, loading script...');
+        return loadGoogleMapsScript(apiKey);
+      })
+      .then(() => {
+        console.log('[CampaignMap] Script loaded, initializing map...');
+        if (!mapRef.current) {
+          console.error('[CampaignMap] Map ref is null!');
+          return;
+        }
+
+        console.log('[CampaignMap] Creating map instance...');
         const map = new google.maps.Map(mapRef.current, {
           center: { lat: centerLat, lng: centerLng },
           zoom: zoom,
@@ -107,11 +137,13 @@ export default function CampaignMap({
         });
 
         mapInstanceRef.current = map;
+        console.log('[CampaignMap] Map created successfully');
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error('Error loading Google Maps:', err);
-        setError('Failed to load map');
+        console.error('[CampaignMap] Error loading Google Maps:', err);
+        console.error('[CampaignMap] Error stack:', err.stack);
+        setError(`Failed to load map: ${err.message}`);
         setIsLoading(false);
       });
   }, [centerLat, centerLng, zoom]);
