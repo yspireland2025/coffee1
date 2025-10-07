@@ -78,11 +78,25 @@ class PackOrderService {
       }
 
       console.log('Pack order created successfully:', data);
+
+      // Update campaign with pack_order_id
+      const { error: updateError } = await supabase
+        .from('campaigns')
+        .update({ pack_order_id: data.id })
+        .eq('id', orderData.campaignId);
+
+      if (updateError) {
+        console.error('Error linking pack order to campaign:', updateError);
+        // Don't fail the whole operation, just log it
+      } else {
+        console.log('Campaign updated with pack_order_id:', data.id);
+      }
+
       return { data };
     } catch (error) {
       console.error('Pack order service error:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Failed to create pack order' 
+      return {
+        error: error instanceof Error ? error.message : 'Failed to create pack order'
       };
     }
   }

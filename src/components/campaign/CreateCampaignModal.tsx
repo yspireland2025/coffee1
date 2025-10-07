@@ -209,6 +209,8 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
             campaignData={campaignData}
             selectedPack={selectedPack}
             shippingAddress={shippingAddress}
+            mobileNumber={mobileNumber}
+            tshirtSizes={tshirtSizes}
             createdCampaign={createdCampaign}
             createdPackOrder={createdPackOrder}
             setCreatedPackOrder={setCreatedPackOrder}
@@ -232,6 +234,8 @@ export default function CreateCampaignModal({ onClose, onSubmit }: CreateCampaig
             campaignData={campaignData}
             selectedPack={selectedPack}
             shippingAddress={shippingAddress}
+            mobileNumber={mobileNumber}
+            tshirtSizes={tshirtSizes}
             createdCampaign={createdCampaign}
             createdPackOrder={createdPackOrder}
             setCreatedPackOrder={setCreatedPackOrder}

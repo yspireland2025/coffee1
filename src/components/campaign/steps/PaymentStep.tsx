@@ -11,6 +11,7 @@ interface PaymentStepProps {
   campaignData: CampaignFormData;
   selectedPack: 'free' | 'medium' | 'large';
   shippingAddress: ShippingAddress;
+  mobileNumber: string;
   tshirtSizes: TshirtSizes;
   createdCampaign: any;
   createdPackOrder: any;
@@ -28,6 +29,7 @@ export default function PaymentStep({
   campaignData,
   selectedPack,
   shippingAddress,
+  mobileNumber,
   tshirtSizes,
   createdCampaign,
   createdPackOrder,
@@ -54,7 +56,7 @@ export default function PaymentStep({
         amount: packOptions.find(p => p.id === selectedPack)!.price * 100,
         tshirtSizes: (selectedPack === 'medium' || selectedPack === 'large') ? tshirtSizes : null,
         shippingAddress,
-        mobileNumber: shippingAddress.name // Using name as mobile for now
+        mobileNumber: mobileNumber
       };
       
       const result = await packOrderService.createPackOrder(packOrderData);

@@ -68,11 +68,12 @@ export default function PackPaymentForm({
 
     try {
       console.log('Creating payment intent for pack order...');
-      
+
       // Create payment intent for pack payment
+      // Note: Using packOrderId as the campaign reference for payment tracking
       const paymentIntentData = await createPaymentIntent(
-        amount, 
-        `pack-${packOrderId}`, // Use pack order ID as campaign ID
+        amount,
+        packOrderId, // Use pack order ID for tracking
         undefined // No donor email for pack payments
       );
       
