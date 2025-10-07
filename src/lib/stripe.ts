@@ -21,7 +21,10 @@ if (!isValidStripeKey) {
   console.warn('Get your key from: https://dashboard.stripe.com/test/apikeys');
 }
 
-export const stripePromise = isValidStripeKey ? loadStripe(stripePublishableKey) : null;
+export const stripePromise = isValidStripeKey ? loadStripe(stripePublishableKey).catch(err => {
+  console.error('Failed to load Stripe:', err);
+  return null;
+}) : Promise.resolve(null);
 
 export const createPaymentIntent = async (amount: number, campaignId: string, donorEmail?: string) => {
   try {
