@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Filter, MapPin, Calendar, Target, Users } from 'lucide-react';
+import { ArrowLeft, Search, Filter, MapPin, Calendar, Target, Users, TrendingUp, Award, Clock } from 'lucide-react';
 import CampaignCard from './CampaignCard';
 import CampaignDetail from './CampaignDetail';
 import DonationModal from './DonationModal';
@@ -16,6 +16,7 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCounty, setSelectedCounty] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'progress' | 'goal' | 'ending_soon'>('newest');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCampaignDetail, setShowCampaignDetail] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
@@ -93,9 +94,30 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
   }, [campaigns, searchTerm, selectedCounty, sortBy]);
 
   const totalRaised = campaigns.reduce((sum, campaign) => sum + campaign.raisedAmount, 0);
-  const averageProgress = campaigns.length > 0 
+  const averageProgress = campaigns.length > 0
     ? campaigns.reduce((sum, campaign) => sum + (campaign.raisedAmount / campaign.goalAmount), 0) / campaigns.length * 100
     : 0;
+
+  // Featured campaigns (highest progress or most raised)
+  const featuredCampaigns = useMemo(() => {
+    return [...campaigns]
+      .sort((a, b) => {
+        const progressA = (a.raisedAmount / a.goalAmount) * 100;
+        const progressB = (b.raisedAmount / b.goalAmount) * 100;
+        return progressB - progressA;
+      })
+      .slice(0, 3);
+  }, [campaigns]);
+
+  // Ending soon campaigns (within 14 days)
+  const endingSoonCampaigns = useMemo(() => {
+    const twoWeeksFromNow = new Date();
+    twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+    return campaigns
+      .filter(campaign => new Date(campaign.eventDate) <= twoWeeksFromNow && new Date(campaign.eventDate) >= new Date())
+      .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+      .slice(0, 3);
+  }, [campaigns]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -153,6 +175,64 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
           </div>
         </div>
       </div>
+
+      {/* Featured Sections */}
+      {campaigns.length > 0 && !searchTerm && !selectedCounty && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Top Performing Campaigns */}
+          {featuredCampaigns.length > 0 && (
+            <div className="mb-12">
+              <div className="flex items-center space-x-2 mb-6">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Top Performing Campaigns</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {featuredCampaigns.map((campaign) => (
+                  <div key={campaign.id} className="relative">
+                    {featuredCampaigns.indexOf(campaign) === 0 && (
+                      <div className="absolute -top-3 -left-3 z-10">
+                        <div className="bg-yellow-400 rounded-full p-2 shadow-lg">
+                          <Award className="h-5 w-5 text-yellow-900" />
+                        </div>
+                      </div>
+                    )}
+                    <CampaignCard
+                      campaign={campaign}
+                      onViewCampaign={handleViewCampaign}
+                      onDonate={handleDonate}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ending Soon */}
+          {endingSoonCampaigns.length > 0 && (
+            <div className="mb-12">
+              <div className="flex items-center space-x-2 mb-6">
+                <Clock className="h-6 w-6 text-orange-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Ending Soon</h2>
+                <span className="text-sm text-gray-600">(Events within 2 weeks)</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {endingSoonCampaigns.map((campaign) => (
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    onViewCampaign={handleViewCampaign}
+                    onDonate={handleDonate}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 mb-8"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">All Campaigns</h2>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
