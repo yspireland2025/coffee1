@@ -1,16 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Loader } from '@googlemaps/js-api-loader';
 import { Campaign } from '../types';
-import { X, MapPin, Calendar, Target } from 'lucide-react';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+import { MapPin } from 'lucide-react';
 
 interface CampaignMapProps {
   campaigns: Campaign[];
@@ -20,13 +11,7 @@ interface CampaignMapProps {
   zoom?: number;
 }
 
-function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, zoom);
-  }, [center, zoom, map]);
-  return null;
-}
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDWJUaXEfQWqNvafQsj3ecoOxxOU6gTPyE';
 
 export default function CampaignMap({
   campaigns,
@@ -35,125 +20,153 @@ export default function CampaignMap({
   centerLng = -6.2603,
   zoom = 7
 }: CampaignMapProps) {
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const campaignsWithCoords = campaigns.filter(
-    c => c.latitude != null && c.longitude != null
-  );
-
-  const defaultCenter: [number, number] = [centerLat, centerLng];
-
-  const createCustomIcon = (campaign: Campaign) => {
-    const progress = (campaign.raisedAmount / campaign.goalAmount) * 100;
-    const color = progress >= 75 ? '#10b981' : progress >= 50 ? '#f59e0b' : '#ef4444';
-
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `
-        <div style="
-          background-color: ${color};
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          border: 3px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          color: white;
-          font-size: 12px;
-        ">
-          €
-        </div>
-      `,
-      iconSize: [30, 30],
-      iconAnchor: [15, 30],
+  useEffect(() => {
+    const loader = new Loader({
+      apiKey: GOOGLE_MAPS_API_KEY,
+      version: 'weekly',
+      libraries: ['places', 'geocoding']
     });
-  };
 
-  if (campaignsWithCoords.length === 0) {
+    loader
+      .load()
+      .then(() => {
+        if (!mapRef.current) return;
+
+        const map = new google.maps.Map(mapRef.current, {
+          center: { lat: centerLat, lng: centerLng },
+          zoom: zoom,
+          mapTypeControl: true,
+          streetViewControl: false,
+          fullscreenControl: true,
+        });
+
+        mapInstanceRef.current = map;
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error loading Google Maps:', err);
+        setError('Failed to load map');
+        setIsLoading(false);
+      });
+  }, [centerLat, centerLng, zoom]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current || isLoading) return;
+
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+
+    const geocoder = new google.maps.Geocoder();
+    const infoWindow = new google.maps.InfoWindow();
+
+    campaigns.forEach((campaign) => {
+      const address = campaign.eircode
+        ? `${campaign.eircode}, Ireland`
+        : `${campaign.location}, ${campaign.county || ''}, Ireland`;
+
+      geocoder.geocode({ address }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          const progress = (campaign.raisedAmount / campaign.goalAmount) * 100;
+          const color = progress >= 75 ? '#10b981' : progress >= 50 ? '#f59e0b' : '#ef4444';
+
+          const marker = new google.maps.Marker({
+            map: mapInstanceRef.current,
+            position: results[0].geometry.location,
+            title: campaign.title,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              fillColor: color,
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 3,
+              scale: 12,
+            },
+          });
+
+          marker.addListener('click', () => {
+            const contentString = `
+              <div style="max-width: 300px; padding: 12px;">
+                <h3 style="font-size: 18px; font-weight: bold; margin: 0 0 12px 0;">${campaign.title}</h3>
+                <div style="margin-bottom: 8px;">
+                  <strong>Location:</strong> ${campaign.location}
+                </div>
+                <div style="margin-bottom: 8px;">
+                  <strong>Event Date:</strong> ${new Date(campaign.eventDate).toLocaleDateString('en-IE', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <strong>Progress:</strong> €${campaign.raisedAmount.toLocaleString()} of €${campaign.goalAmount.toLocaleString()}
+                </div>
+                <div style="background: #e5e7eb; border-radius: 9999px; height: 8px; margin-bottom: 12px;">
+                  <div style="background: #10b981; height: 8px; border-radius: 9999px; width: ${Math.min(progress, 100)}%;"></div>
+                </div>
+                <button
+                  onclick="window.viewCampaignDetails('${campaign.id}')"
+                  style="background: #a8846d; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: 500;"
+                >
+                  View Details
+                </button>
+              </div>
+            `;
+
+            infoWindow.setContent(contentString);
+            infoWindow.open(mapInstanceRef.current, marker);
+          });
+
+          markersRef.current.push(marker);
+        }
+      });
+    });
+
+    (window as any).viewCampaignDetails = (campaignId: string) => {
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (campaign) {
+        onCampaignClick(campaign);
+      }
+    };
+
+    return () => {
+      delete (window as any).viewCampaignDetails;
+    };
+  }, [campaigns, isLoading, onCampaignClick]);
+
+  if (error) {
     return (
       <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
         <div className="text-center">
-          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No campaigns with location data available</p>
+          <MapPin className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading map...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-[600px] rounded-lg overflow-hidden shadow-lg">
-      <MapContainer
-        center={defaultCenter}
-        zoom={zoom}
-        style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={true}
-      >
-        <MapUpdater center={defaultCenter} zoom={zoom} />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+    <div className="relative">
+      <div ref={mapRef} className="h-[600px] rounded-lg overflow-hidden shadow-lg" />
 
-        {campaignsWithCoords.map((campaign) => (
-          <Marker
-            key={campaign.id}
-            position={[campaign.latitude!, campaign.longitude!]}
-            icon={createCustomIcon(campaign)}
-            eventHandlers={{
-              click: () => setSelectedCampaign(campaign),
-            }}
-          >
-            <Popup>
-              <div className="min-w-[250px]">
-                <h3 className="font-bold text-lg mb-2">{campaign.title}</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start space-x-2">
-                    <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-700">{campaign.location}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-gray-700">
-                      {new Date(campaign.eventDate).toLocaleDateString('en-IE', {
-                        weekday: 'short',
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Target className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                    <span className="text-gray-700">
-                      €{campaign.raisedAmount.toLocaleString()} of €{campaign.goalAmount.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div
-                      className="bg-green-600 h-2 rounded-full transition-all"
-                      style={{
-                        width: `${Math.min((campaign.raisedAmount / campaign.goalAmount) * 100, 100)}%`
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => onCampaignClick(campaign)}
-                  className="mt-3 w-full bg-[#a8846d] text-white px-4 py-2 rounded-lg hover:bg-[#96785f] transition-colors text-sm font-medium"
-                >
-                  View Details
-                </button>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-
-      {/* Map Legend */}
-      <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg border border-gray-200 z-[1000]">
+      <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg border border-gray-200 z-10">
         <h4 className="font-semibold text-sm mb-2">Campaign Progress</h4>
         <div className="space-y-2 text-xs">
           <div className="flex items-center space-x-2">
