@@ -11,7 +11,13 @@ interface CampaignMapProps {
   zoom?: number;
 }
 
+let cachedApiKey: string | null = null;
+
 async function getGoogleMapsApiKey(): Promise<string> {
+  if (cachedApiKey) {
+    return cachedApiKey;
+  }
+
   const { data, error } = await supabase
     .from('system_settings')
     .select('value')
@@ -22,7 +28,8 @@ async function getGoogleMapsApiKey(): Promise<string> {
     throw new Error('Failed to load Google Maps API key');
   }
 
-  return data.value;
+  cachedApiKey = data.value;
+  return cachedApiKey;
 }
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
