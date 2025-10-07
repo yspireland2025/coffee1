@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
 import { Campaign } from '../types';
 import { MapPin } from 'lucide-react';
 
@@ -12,6 +11,23 @@ interface CampaignMapProps {
 }
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDWJUaXEfQWqNvafQsj3ecoOxxOU6gTPyE';
+
+function loadGoogleMapsScript(apiKey: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geocoding`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Google Maps'));
+    document.head.appendChild(script);
+  });
+}
 
 export default function CampaignMap({
   campaigns,
@@ -27,14 +43,7 @@ export default function CampaignMap({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loader = new Loader({
-      apiKey: GOOGLE_MAPS_API_KEY,
-      version: 'weekly',
-      libraries: ['places', 'geocoding']
-    });
-
-    loader
-      .load()
+    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
       .then(() => {
         if (!mapRef.current) return;
 
