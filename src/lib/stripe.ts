@@ -39,7 +39,7 @@ export const createPaymentIntent = async (amount: number, campaignId: string, do
     
     // Hardcoded Supabase configuration
     const supabaseUrl = 'https://cdohoaiqioakaksxkdlu.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkb2hvYWlxaW9ha2Frc3hrZGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcyODUzNDAsImV4cCI6MjA1Mjg2MTM0MH0.Ue-uJuAmh0vGKZCCz-OoDo0Wv9WGweFH5KGu7FdHVmg';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkb2hvYWlxaW9ha2Frc3hrZGx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NDY3MjQsImV4cCI6MjA3MDMyMjcyNH0.cJOY3-PgROVH6S3GYU7fI-dQcehsdSL2cQdZCk9mL0w';
     
     console.log('Environment check:', {
       hasSupabaseUrl: !!supabaseUrl,
