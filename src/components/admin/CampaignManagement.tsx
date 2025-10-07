@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Search, Filter, Eye, Edit, Trash2, CheckCircle, XCircle,
   Calendar, MapPin, DollarSign, Users, Clock, Download,
-  AlertTriangle, Mail, Phone
+  AlertTriangle, AlertCircle, Mail, Phone
 } from 'lucide-react';
 import { useCampaigns } from '../../hooks/useCampaigns';
 import { supabase } from '../../lib/supabase';
@@ -331,6 +331,20 @@ export default function CampaignManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Info Banner */}
+      {allCampaigns.some(c => c.pack_payment_status === 'pending' && !c.is_approved && c.is_active) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-amber-800">
+                <strong>Note:</strong> Some campaigns have pending pack payments. Campaigns cannot be approved until the organizer completes their pack payment.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
@@ -461,7 +475,7 @@ export default function CampaignManagement() {
                       
                       {!campaign.is_approved && campaign.is_active && (
                         <>
-                          {campaign.pack_payment_status === 'completed' && (
+                          {campaign.pack_payment_status === 'completed' ? (
                             <>
                           <button
                             onClick={() => handleApprove(campaign.id)}
@@ -478,6 +492,10 @@ export default function CampaignManagement() {
                             <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                           </button>
                             </>
+                          ) : (
+                            <span className="text-xs text-gray-500 italic" title="Cannot approve until pack payment is completed">
+                              Awaiting payment
+                            </span>
                           )}
                         </>
                       )}

@@ -38,6 +38,7 @@ export default function PaymentStep({
 }: PaymentStepProps) {
   const [paymentError, setPaymentError] = useState('');
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState(false);
   const [orderCreated, setOrderCreated] = useState(false);
 
   // Create pack order when component mounts
@@ -115,14 +116,19 @@ export default function PaymentStep({
 
   const handlePaymentError = (error: string) => {
     setPaymentError(error);
+    setPaymentFailed(true);
+  };
 
-    const errorToast = document.createElement('div');
-    errorToast.className = 'fixed top-4 right-4 bg-red-100 border border-red-200 text-red-800 px-6 py-3 rounded-lg shadow-lg z-50';
-    errorToast.innerHTML = `❌ Payment failed: ${error}. Please try again.`;
-    document.body.appendChild(errorToast);
+  const handleSkipPayment = () => {
+    onClose();
+
+    const infoToast = document.createElement('div');
+    infoToast.className = 'fixed top-4 right-4 bg-amber-100 border border-amber-200 text-amber-800 px-6 py-3 rounded-lg shadow-lg z-50';
+    infoToast.innerHTML = `ℹ️ Campaign created successfully. Complete payment to get your pack approved.`;
+    document.body.appendChild(infoToast);
     setTimeout(() => {
-      if (document.body.contains(errorToast)) {
-        document.body.removeChild(errorToast);
+      if (document.body.contains(infoToast)) {
+        document.body.removeChild(infoToast);
       }
     }, 7000);
   };
@@ -154,6 +160,42 @@ export default function PaymentStep({
         <p className="text-sm text-gray-500">
           Your campaign will be reviewed and approved within 24 hours.
         </p>
+      </div>
+    );
+  }
+
+  if (paymentFailed) {
+    return (
+      <div className="text-center py-8">
+        <div className="bg-amber-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+          <AlertCircle className="h-8 w-8 text-amber-600" />
+        </div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Payment Failed</h3>
+        <p className="text-gray-600 mb-4">
+          Your campaign has been created, but the payment could not be processed.
+        </p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-800 text-sm">
+            <strong>Error:</strong> {paymentError}
+          </p>
+        </div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <p className="text-amber-800 font-medium mb-2">What happens next?</p>
+          <ul className="text-left text-amber-800 text-sm space-y-2">
+            <li>✓ Your campaign has been saved</li>
+            <li>⏸ Campaign approval is pending payment completion</li>
+            <li>📧 You can complete payment later from "My Campaigns"</li>
+          </ul>
+        </div>
+        <p className="text-sm text-gray-600 mb-6">
+          Your campaign will not be approved until payment is completed.
+        </p>
+        <button
+          onClick={handleSkipPayment}
+          className="bg-gray-700 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors font-medium"
+        >
+          Continue
+        </button>
       </div>
     );
   }
