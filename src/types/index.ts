@@ -8,6 +8,9 @@ export interface Campaign {
   eventDate: string;
   eventTime: string;
   location: string;
+  eircode?: string;
+  latitude?: number;
+  longitude?: number;
   image: string;
   socialLinks: {
     facebook?: string;

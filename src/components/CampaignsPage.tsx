@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Search, Filter, MapPin, Calendar, Target, Users, TrendingUp, Award, Clock } from 'lucide-react';
+import { ArrowLeft, Search, Filter, MapPin, Calendar, Target, Users, TrendingUp, Award, Clock, Map, Grid3x3 } from 'lucide-react';
 import CampaignCard from './CampaignCard';
 import CampaignDetail from './CampaignDetail';
 import DonationModal from './DonationModal';
+import CampaignMap from './CampaignMap';
 import { Campaign } from '../types';
 import { irishCounties } from '../data/counties';
 import { campaignService } from '../services/campaignService';
@@ -15,8 +16,12 @@ interface CampaignsPageProps {
 export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCounty, setSelectedCounty] = useState('');
+  const [eircodeSearch, setEircodeSearch] = useState('');
+  const [dateRange, setDateRange] = useState<'all' | 'next_week' | 'next_month' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'progress' | 'goal' | 'ending_soon'>('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showCampaignDetail, setShowCampaignDetail] = useState(false);
   const [showDonationModal, setShowDonationModal] = useState(false);
@@ -72,6 +77,42 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
       );
     }
 
+    // Filter by eircode
+    if (eircodeSearch) {
+      filtered = filtered.filter(campaign =>
+        campaign.eircode?.toLowerCase().includes(eircodeSearch.toLowerCase())
+      );
+    }
+
+    // Filter by date range
+    if (dateRange !== 'all') {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      if (dateRange === 'next_week') {
+        const nextWeek = new Date(now);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        filtered = filtered.filter(campaign => {
+          const eventDate = new Date(campaign.eventDate);
+          return eventDate >= now && eventDate <= nextWeek;
+        });
+      } else if (dateRange === 'next_month') {
+        const nextMonth = new Date(now);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        filtered = filtered.filter(campaign => {
+          const eventDate = new Date(campaign.eventDate);
+          return eventDate >= now && eventDate <= nextMonth;
+        });
+      } else if (dateRange === 'custom' && customStartDate && customEndDate) {
+        const start = new Date(customStartDate);
+        const end = new Date(customEndDate);
+        filtered = filtered.filter(campaign => {
+          const eventDate = new Date(campaign.eventDate);
+          return eventDate >= start && eventDate <= end;
+        });
+      }
+    }
+
     // Sort campaigns
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -91,7 +132,7 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
     });
 
     return sorted;
-  }, [campaigns, searchTerm, selectedCounty, sortBy]);
+  }, [campaigns, searchTerm, selectedCounty, eircodeSearch, dateRange, customStartDate, customEndDate, sortBy]);
 
   const totalRaised = campaigns.reduce((sum, campaign) => sum + campaign.raisedAmount, 0);
   const averageProgress = campaigns.length > 0
@@ -237,6 +278,34 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+          {/* View Toggle */}
+          <div className="flex justify-end mb-6">
+            <div className="inline-flex rounded-lg border border-gray-300 p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Grid3x3 className="h-4 w-4" />
+                <span>Grid View</span>
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors ${
+                  viewMode === 'map'
+                    ? 'bg-green-600 text-white'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                <Map className="h-4 w-4" />
+                <span>Map View</span>
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
@@ -292,10 +361,75 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
             </div>
           </div>
 
+          {/* Second Row - Additional Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            {/* Eircode Search */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search by Eircode
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="e.g., D02 XY45"
+                  value={eircodeSearch}
+                  onChange={(e) => setEircodeSearch(e.target.value.toUpperCase())}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Event Date Range
+              </label>
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value as any)}
+                className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="all">All Dates</option>
+                <option value="next_week">Next 7 Days</option>
+                <option value="next_month">Next 30 Days</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+
+            {/* Custom Date Range (shown when custom is selected) */}
+            {dateRange === 'custom' && (
+              <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Active Filters Display */}
-          {(searchTerm || selectedCounty) && (
+          {(searchTerm || selectedCounty || eircodeSearch || dateRange !== 'all') && (
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center flex-wrap gap-2">
                 <Filter className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-600">Active filters:</span>
                 {searchTerm && (
@@ -308,10 +442,24 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
                     County: {selectedCounty}
                   </span>
                 )}
+                {eircodeSearch && (
+                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">
+                    Eircode: {eircodeSearch}
+                  </span>
+                )}
+                {dateRange !== 'all' && (
+                  <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">
+                    Date: {dateRange === 'next_week' ? 'Next 7 Days' : dateRange === 'next_month' ? 'Next 30 Days' : 'Custom Range'}
+                  </span>
+                )}
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setSelectedCounty('');
+                    setEircodeSearch('');
+                    setDateRange('all');
+                    setCustomStartDate('');
+                    setCustomEndDate('');
                   }}
                   className="text-gray-500 hover:text-gray-700 text-xs underline"
                 >
@@ -331,8 +479,13 @@ export default function CampaignsPage({ campaigns, onBack }: CampaignsPageProps)
           </p>
         </div>
 
-        {/* Campaigns Grid */}
-        {filteredAndSortedCampaigns.length > 0 ? (
+        {/* Campaigns Grid or Map */}
+        {viewMode === 'map' ? (
+          <CampaignMap
+            campaigns={filteredAndSortedCampaigns}
+            onCampaignClick={handleViewCampaign}
+          />
+        ) : filteredAndSortedCampaigns.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredAndSortedCampaigns.map((campaign) => (
               <CampaignCard

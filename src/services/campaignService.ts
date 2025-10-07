@@ -1,9 +1,21 @@
 import { supabase } from '../lib/supabase';
+import { geocodingService } from './geocodingService';
 
 export const campaignService = {
   async createCampaign(campaignData: any, userId?: string) {
     console.log('campaignService.createCampaign called with:', campaignData);
-    
+
+    let latitude = null;
+    let longitude = null;
+
+    if (campaignData.eircode) {
+      const coords = await geocodingService.geocodeEircode(campaignData.eircode);
+      if (coords) {
+        latitude = coords.latitude;
+        longitude = coords.longitude;
+      }
+    }
+
     const { data, error } = await supabase
       .from('campaigns')
       .insert([{
@@ -12,6 +24,8 @@ export const campaignService = {
         email: campaignData.email,
         county: campaignData.county,
         eircode: campaignData.eircode,
+        latitude,
+        longitude,
         story: campaignData.story,
         goal_amount: campaignData.goalAmount,
         raised_amount: 0,
@@ -28,7 +42,7 @@ export const campaignService = {
       .select();
 
     if (error) throw error;
-    return data[0]; // Return the first (and only) created campaign
+    return data[0];
   },
 
   async createDonation(donationData: {
