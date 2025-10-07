@@ -254,8 +254,49 @@ class PackOrderService {
       return { data: formattedData };
     } catch (error) {
       console.error('Error fetching outstanding pack orders:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Failed to fetch outstanding pack orders' 
+      return {
+        error: error instanceof Error ? error.message : 'Failed to fetch outstanding pack orders'
+      };
+    }
+  }
+
+  async createPaymentLink(data: {
+    packOrderId: string;
+    campaignTitle: string;
+    organizerName: string;
+    organizerEmail: string;
+    sendEmail: boolean;
+  }): Promise<{ paymentLink?: string; error?: string }> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pack-payment-link`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create payment link');
+      }
+
+      const result = await response.json();
+      return { paymentLink: result.paymentLink };
+    } catch (error) {
+      console.error('Error creating payment link:', error);
+      return {
+        error: error instanceof Error ? error.message : 'Failed to create payment link'
       };
     }
   }

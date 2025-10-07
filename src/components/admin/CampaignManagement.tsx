@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, Filter, Eye, Edit, Trash2, CheckCircle, XCircle,
   Calendar, MapPin, DollarSign, Users, Clock, Download,
-  AlertTriangle, AlertCircle, Mail, Phone
+  AlertTriangle, AlertCircle, Mail, Phone, Send
 } from 'lucide-react';
 import { useCampaigns } from '../../hooks/useCampaigns';
 import { supabase } from '../../lib/supabase';
 import { emailService } from '../../services/emailService';
+import { packOrderService } from '../../services/packOrderService';
 
 interface Campaign {
   id: string;
@@ -35,6 +36,7 @@ export default function CampaignManagement() {
   const [countyFilter, setCountyFilter] = useState('all');
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [sendingPaymentLink, setSendingPaymentLink] = useState<string | null>(null);
 
   // Load ALL campaigns (including pending ones) for admin view
   useEffect(() => {
@@ -301,6 +303,53 @@ export default function CampaignManagement() {
     deactivateCampaign();
   };
 
+  const handleSendPaymentLink = async (campaign: Campaign) => {
+    if (!campaign.pack_order_id) {
+      alert('No pack order found for this campaign');
+      return;
+    }
+
+    setSendingPaymentLink(campaign.id);
+
+    try {
+      const result = await packOrderService.createPaymentLink({
+        packOrderId: campaign.pack_order_id,
+        campaignTitle: campaign.title,
+        organizerName: campaign.organizer,
+        organizerEmail: campaign.email,
+        sendEmail: true
+      });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      const successToast = document.createElement('div');
+      successToast.className = 'fixed top-4 right-4 bg-green-100 border border-green-200 text-green-800 px-6 py-3 rounded-lg shadow-lg z-50';
+      successToast.innerHTML = `Payment link sent to ${campaign.organizer} at ${campaign.email}`;
+      document.body.appendChild(successToast);
+      setTimeout(() => {
+        if (document.body.contains(successToast)) {
+          document.body.removeChild(successToast);
+        }
+      }, 5000);
+    } catch (error) {
+      console.error('Error sending payment link:', error);
+
+      const errorToast = document.createElement('div');
+      errorToast.className = 'fixed top-4 right-4 bg-red-100 border border-red-200 text-red-800 px-6 py-3 rounded-lg shadow-lg z-50';
+      errorToast.innerHTML = `Failed to send payment link: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      document.body.appendChild(errorToast);
+      setTimeout(() => {
+        if (document.body.contains(errorToast)) {
+          document.body.removeChild(errorToast);
+        }
+      }, 5000);
+    } finally {
+      setSendingPaymentLink(null);
+    }
+  };
+
   const getStatusBadge = (campaign: Campaign) => {
     if (campaign.pack_payment_status === 'pending') {
       return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">Pack Payment Pending</span>;
@@ -493,9 +542,23 @@ export default function CampaignManagement() {
                           </button>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-500 italic" title="Cannot approve until pack payment is completed">
-                              Awaiting payment
-                            </span>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500 italic" title="Cannot approve until pack payment is completed">
+                                Awaiting payment
+                              </span>
+                              <button
+                                onClick={() => handleSendPaymentLink(campaign)}
+                                disabled={sendingPaymentLink === campaign.id}
+                                className="bg-blue-100 text-blue-700 p-1.5 sm:p-2 rounded-lg hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Send payment link to organizer"
+                              >
+                                {sendingPaymentLink === campaign.id ? (
+                                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                                ) : (
+                                  <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+                                )}
+                              </button>
+                            </div>
                           )}
                         </>
                       )}
