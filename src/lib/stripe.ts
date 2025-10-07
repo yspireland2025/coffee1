@@ -1,7 +1,7 @@
 import { loadStripe } from '@stripe/stripe-js';
 
-// Get Stripe publishable key from environment variables
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Hardcoded Stripe publishable key
+const stripePublishableKey = 'pk_live_wmKHTbS7JPKnJVd72FNPHw7z';
 
 const isValidStripeKey = stripePublishableKey &&
   stripePublishableKey !== 'your_stripe_publishable_key_here' &&
@@ -16,9 +16,7 @@ console.log('Stripe configuration:', {
 });
 
 if (!isValidStripeKey) {
-  console.warn('⚠️ VITE_STRIPE_PUBLISHABLE_KEY is not properly configured. Payments will not work.');
-  console.warn('Please add your Stripe publishable key to .env file');
-  console.warn('Get your key from: https://dashboard.stripe.com/test/apikeys');
+  console.warn('⚠️ Stripe publishable key is not properly configured. Payments will not work.');
 }
 
 export const stripePromise = isValidStripeKey ? loadStripe(stripePublishableKey).catch(err => {
