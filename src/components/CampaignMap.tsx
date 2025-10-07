@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Campaign } from '../types';
 import { MapPin } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface CampaignMapProps {
   campaigns: Campaign[];
@@ -10,7 +11,19 @@ interface CampaignMapProps {
   zoom?: number;
 }
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+async function getGoogleMapsApiKey(): Promise<string> {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'google_maps_api_key')
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error('Failed to load Google Maps API key');
+  }
+
+  return data.value;
+}
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -43,7 +56,8 @@ export default function CampaignMap({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+    getGoogleMapsApiKey()
+      .then((apiKey) => loadGoogleMapsScript(apiKey))
       .then(() => {
         if (!mapRef.current) return;
 
