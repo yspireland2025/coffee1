@@ -45,11 +45,36 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
       return;
     }
 
+    if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+      const checkGoogle = setInterval(() => {
+        if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+          clearInterval(checkGoogle);
+          resolve();
+        }
+      }, 100);
+      setTimeout(() => {
+        clearInterval(checkGoogle);
+        reject(new Error('Google Maps loading timeout'));
+      }, 10000);
+      return;
+    }
+
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geocoding`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geocoding&loading=async`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      const checkGoogle = setInterval(() => {
+        if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+          clearInterval(checkGoogle);
+          resolve();
+        }
+      }, 50);
+      setTimeout(() => {
+        clearInterval(checkGoogle);
+        reject(new Error('Google Maps initialization timeout'));
+      }, 5000);
+    };
     script.onerror = () => reject(new Error('Failed to load Google Maps'));
     document.head.appendChild(script);
   });
