@@ -1,38 +1,36 @@
 import { supabase } from '../lib/supabase';
-import { geocodingService } from './geocodingService';
+import { getCoordinatesForCounty } from '../data/countyCoordinates';
 
 export const migrationService = {
   async geocodeExistingCampaigns() {
     try {
       const { data: campaigns, error } = await supabase
         .from('campaigns')
-        .select('id, eircode, latitude, longitude')
+        .select('id, county, latitude, longitude')
         .is('latitude', null);
 
       if (error) throw error;
 
       if (!campaigns || campaigns.length === 0) {
-        console.log('No campaigns need geocoding');
+        console.log('No campaigns need coordinates');
         return { success: true, updated: 0 };
       }
 
-      console.log(`Found ${campaigns.length} campaigns to geocode`);
+      console.log(`Found ${campaigns.length} campaigns to add coordinates`);
       let updated = 0;
 
       for (const campaign of campaigns) {
-        if (campaign.eircode) {
-          console.log(`Geocoding campaign ${campaign.id} with eircode ${campaign.eircode}`);
+        if (campaign.county) {
+          console.log(`Adding coordinates for campaign ${campaign.id} in ${campaign.county}`);
 
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          const coords = await geocodingService.geocodeEircode(campaign.eircode);
+          const coords = getCoordinatesForCounty(campaign.county);
 
           if (coords) {
             const { error: updateError } = await supabase
               .from('campaigns')
               .update({
-                latitude: coords.latitude,
-                longitude: coords.longitude
+                latitude: coords.lat,
+                longitude: coords.lng
               })
               .eq('id', campaign.id);
 
@@ -43,14 +41,14 @@ export const migrationService = {
               console.log(`✓ Updated campaign ${campaign.id} with coords:`, coords);
             }
           } else {
-            console.log(`✗ Could not geocode eircode ${campaign.eircode} for campaign ${campaign.id}`);
+            console.log(`✗ Could not find coordinates for county ${campaign.county}`);
           }
         }
       }
 
       return { success: true, updated, total: campaigns.length };
     } catch (error) {
-      console.error('Error geocoding campaigns:', error);
+      console.error('Error adding coordinates to campaigns:', error);
       return { success: false, error };
     }
   }

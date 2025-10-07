@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { geocodingService } from './geocodingService';
+import { getCoordinatesForCounty } from '../data/countyCoordinates';
 
 export const campaignService = {
   async createCampaign(campaignData: any, userId?: string) {
@@ -8,11 +8,11 @@ export const campaignService = {
     let latitude = null;
     let longitude = null;
 
-    if (campaignData.eircode) {
-      const coords = await geocodingService.geocodeEircode(campaignData.eircode);
+    if (campaignData.county) {
+      const coords = getCoordinatesForCounty(campaignData.county);
       if (coords) {
-        latitude = coords.latitude;
-        longitude = coords.longitude;
+        latitude = coords.lat;
+        longitude = coords.lng;
       }
     }
 
