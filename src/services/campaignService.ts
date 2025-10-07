@@ -1,20 +1,8 @@
 import { supabase } from '../lib/supabase';
-import { getCoordinatesForCounty } from '../data/countyCoordinates';
 
 export const campaignService = {
   async createCampaign(campaignData: any, userId?: string) {
     console.log('campaignService.createCampaign called with:', campaignData);
-
-    let latitude = null;
-    let longitude = null;
-
-    if (campaignData.county) {
-      const coords = getCoordinatesForCounty(campaignData.county);
-      if (coords) {
-        latitude = coords.lat;
-        longitude = coords.lng;
-      }
-    }
 
     const { data, error } = await supabase
       .from('campaigns')
@@ -24,8 +12,6 @@ export const campaignService = {
         email: campaignData.email,
         county: campaignData.county,
         eircode: campaignData.eircode,
-        latitude,
-        longitude,
         story: campaignData.story,
         goal_amount: campaignData.goalAmount,
         raised_amount: 0,

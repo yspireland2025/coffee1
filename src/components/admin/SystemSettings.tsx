@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import {
   Settings, Save, RefreshCw, Shield, Mail, Bell, Database,
-  Globe, Lock, Users, AlertTriangle, CheckCircle, Info, MapPin
+  Globe, Lock, Users, AlertTriangle, CheckCircle, Info
 } from 'lucide-react';
 import EmailTemplateManager from './EmailTemplateManager';
-import { migrationService } from '../../services/migrationService';
 
 export default function SystemSettings() {
   const [settings, setSettings] = useState({
@@ -50,8 +49,6 @@ export default function SystemSettings() {
   const [activeTab, setActiveTab] = useState('general');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [geocoding, setGeocoding] = useState(false);
-  const [geocodeResult, setGeocodeResult] = useState<any>(null);
 
   const handleSave = async () => {
     setSaving(true);
@@ -59,14 +56,6 @@ export default function SystemSettings() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
-  };
-
-  const handleGeocodeAll = async () => {
-    setGeocoding(true);
-    setGeocodeResult(null);
-    const result = await migrationService.geocodeExistingCampaigns();
-    setGeocoding(false);
-    setGeocodeResult(result);
   };
 
   const tabs = [
@@ -441,59 +430,18 @@ export default function SystemSettings() {
             <div className="border-t border-gray-200 pt-6">
               <h4 className="text-md font-semibold text-gray-900 mb-4">Data Maintenance</h4>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <div className="flex items-start space-x-2">
-                  <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <Info className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div>
-                    <h5 className="font-medium text-blue-900 mb-1">Geocode Campaigns</h5>
-                    <p className="text-blue-800 text-sm mb-3">
-                      Update all campaigns with missing GPS coordinates based on their eircode.
-                      This enables campaigns to appear on the map view.
+                    <h5 className="font-medium text-blue-900 mb-1">Map Integration</h5>
+                    <p className="text-blue-800 text-sm">
+                      Campaigns are automatically displayed on the map using Google Maps geocoding.
+                      No manual coordinate management required.
                     </p>
-                    <button
-                      onClick={handleGeocodeAll}
-                      disabled={geocoding}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                    >
-                      {geocoding ? (
-                        <>
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                          <span>Geocoding...</span>
-                        </>
-                      ) : (
-                        <>
-                          <MapPin className="h-4 w-4" />
-                          <span>Geocode All Campaigns</span>
-                        </>
-                      )}
-                    </button>
                   </div>
                 </div>
               </div>
-
-              {geocodeResult && (
-                <div className={`rounded-xl p-4 ${
-                  geocodeResult.success
-                    ? 'bg-green-50 border border-green-200'
-                    : 'bg-red-50 border border-red-200'
-                }`}>
-                  <div className="flex items-center space-x-2">
-                    {geocodeResult.success ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                    ) : (
-                      <AlertTriangle className="h-5 w-5 text-red-600" />
-                    )}
-                    <p className={`text-sm font-medium ${
-                      geocodeResult.success ? 'text-green-800' : 'text-red-800'
-                    }`}>
-                      {geocodeResult.success
-                        ? `Successfully geocoded ${geocodeResult.updated} of ${geocodeResult.total} campaigns`
-                        : 'Error geocoding campaigns'
-                      }
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         );
