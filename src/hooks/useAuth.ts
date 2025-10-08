@@ -10,22 +10,38 @@ export function useAuth() {
   // Session timeout duration (15 minutes for users)
   const SESSION_TIMEOUT = 15 * 60 * 1000; // 15 minutes in milliseconds
 
-  const clearSessionTimer = useCallback(() => {
+  const clearSessionTimer = () => {
     if (sessionTimer) {
       clearTimeout(sessionTimer);
       setSessionTimer(null);
     }
-  }, [sessionTimer]);
+  };
 
-  const startSessionTimer = useCallback(() => {
+  const signOut = async () => {
+    // Always clear local state first
+    setUser(null);
+    if (sessionTimer) {
+      clearTimeout(sessionTimer);
+      setSessionTimer(null);
+    }
+
+    // Clear auth service session
+    await authService.logout();
+
+    return { error: null };
+  };
+
+  const startSessionTimer = () => {
     // Clear any existing timer
-    clearSessionTimer();
+    if (sessionTimer) {
+      clearTimeout(sessionTimer);
+    }
 
     // Set new timer for 15 minutes
     const timer = setTimeout(() => {
       console.log('User session expired after 15 minutes');
       signOut();
-      
+
       // Show session expired notification
       const expiredToast = document.createElement('div');
       expiredToast.className = 'fixed top-4 right-4 bg-yellow-100 border border-yellow-200 text-yellow-800 px-6 py-3 rounded-lg shadow-lg z-50';
@@ -39,42 +55,51 @@ export function useAuth() {
     }, SESSION_TIMEOUT);
 
     setSessionTimer(timer);
-  }, [SESSION_TIMEOUT]);
+  };
 
   // Reset session timer on user activity
-  const resetSessionTimer = useCallback(() => {
+  const resetSessionTimer = () => {
     if (authService.getCurrentUser()) {
       startSessionTimer();
     }
-  }, [startSessionTimer]);
+  };
 
   useEffect(() => {
+    let mounted = true;
+
     const initializeAuth = async () => {
       try {
         const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
-        
-        if (currentUser) {
-          startSessionTimer();
+        if (mounted) {
+          setUser(currentUser);
+
+          if (currentUser) {
+            startSessionTimer();
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
-    
+
     initializeAuth();
 
     // Listen for auth state changes from our custom auth service
     const unsubscribe = authService.onAuthStateChange((user) => {
-      setUser(user);
-      if (user) {
-        startSessionTimer();
+      if (mounted) {
+        setUser(user);
+        if (user) {
+          startSessionTimer();
+        }
       }
     });
 
     return () => {
+      mounted = false;
       unsubscribe();
       if (sessionTimer) {
         clearTimeout(sessionTimer);
@@ -85,10 +110,12 @@ export function useAuth() {
   // Add activity listeners to reset timer
   useEffect(() => {
     if (user) {
-      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-      
+      const events = ['mousedown', 'keypress', 'click'];
+
       const resetTimer = () => {
-        resetSessionTimer();
+        if (authService.getCurrentUser()) {
+          startSessionTimer();
+        }
       };
 
       events.forEach(event => {
@@ -101,7 +128,7 @@ export function useAuth() {
         });
       };
     }
-  }, [user, resetSessionTimer]);
+  }, [user]);
 
   const signUp = async (email: string, password: string, metadata?: any) => {
     console.log('Attempting to sign up user:', email);
@@ -138,20 +165,6 @@ export function useAuth() {
       }
       return { data: { user: loggedInUser }, error: null };
     }
-  };
-
-  const signOut = async () => {
-    // Always clear local state first
-    setUser(null);
-    if (sessionTimer) {
-      clearTimeout(sessionTimer);
-      setSessionTimer(null);
-    }
-    
-    // Clear auth service session
-    await authService.logout();
-    
-    return { error: null };
   };
 
   const resetPassword = async (email: string) => {

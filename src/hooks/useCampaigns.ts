@@ -66,8 +66,19 @@ export function useCampaigns() {
   };
 
   useEffect(() => {
-    fetchCampaigns();
+    let mounted = true;
 
+    const loadCampaigns = async () => {
+      if (mounted) {
+        await fetchCampaigns();
+      }
+    };
+
+    loadCampaigns();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return { campaigns, loading, error, refetch: fetchCampaigns };

@@ -23,12 +23,14 @@ export function useAdmin() {
   const WARNING_TIME = 5 * 60 * 1000; // 5 minutes before logout
 
   useEffect(() => {
+    let mounted = true;
+
     // Check for existing admin session on app start
     const checkExistingSession = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user && (user.email === 'admin@yspi.ie' || user.user_metadata?.role === 'admin')) {
+
+        if (mounted && user && (user.email === 'admin@yspi.ie' || user.user_metadata?.role === 'admin')) {
           const formattedUser = {
             id: user.id,
             email: user.email || '',
@@ -46,14 +48,18 @@ export function useAdmin() {
       } catch (error) {
         console.error('Error checking existing session:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
-    
+
     checkExistingSession();
 
     // Listen for auth state changes from Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
       if (session?.user && (session.user.email === 'admin@yspi.ie' || session.user.user_metadata?.role === 'admin')) {
         const formattedUser = {
           id: session.user.id,
@@ -74,6 +80,7 @@ export function useAdmin() {
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -156,10 +163,12 @@ export function useAdmin() {
   // Add activity listeners to reset timer
   useEffect(() => {
     if (adminUser) {
-      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-      
+      const events = ['mousedown', 'keypress', 'click'];
+
       const resetTimer = () => {
-        resetSessionTimer();
+        if (adminUser) {
+          startSessionTimer();
+        }
       };
 
       events.forEach(event => {
