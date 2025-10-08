@@ -351,19 +351,19 @@ export default function CampaignManagement() {
   };
 
   const getStatusBadge = (campaign: Campaign) => {
-    if (campaign.pack_payment_status === 'pending') {
-      return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">Pack Payment Pending</span>;
-    }
-    if (!campaign.is_approved && campaign.is_active && campaign.pack_payment_status === 'completed') {
-      return <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pending</span>;
+    if (!campaign.is_active) {
+      return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">Inactive</span>;
     }
     if (campaign.is_approved && campaign.is_active) {
       return <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Live</span>;
     }
-    if (!campaign.is_active) {
-      return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">Inactive</span>;
+    if (campaign.pack_payment_status === 'pending') {
+      return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">Pack Payment Pending</span>;
     }
-    return <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">Rejected</span>;
+    if (!campaign.is_approved && campaign.is_active && campaign.pack_payment_status === 'completed') {
+      return <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Awaiting Approval</span>;
+    }
+    return <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pending</span>;
   };
 
   const counties = [...new Set(allCampaigns.map(c => c.county))];
