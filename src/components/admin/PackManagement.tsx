@@ -227,12 +227,10 @@ export default function PackManagement() {
   const deletePackContent = async (id: string) => {
     try {
       console.warn('🟢 DELETE FUNCTION CALLED with id:', id);
+      console.warn('🟢 Current packContents state:', packContents);
 
       const { data: { user } } = await supabase.auth.getUser();
       console.warn('🟢 Current user:', user?.id);
-
-      console.warn('🟢 Updating UI optimistically...');
-      setPackContents(prev => prev.filter(item => item.id !== id));
 
       console.warn('🟢 Calling Supabase delete...');
       const { data, error } = await supabase
@@ -245,11 +243,12 @@ export default function PackManagement() {
 
       if (error) {
         console.error('🟢 Delete error:', error);
-        await loadPackContents();
         throw error;
       }
 
-      console.warn('🟢 Successfully deleted from database');
+      console.warn('🟢 Reloading pack contents from database...');
+      await loadPackContents();
+      console.warn('🟢 Pack contents reloaded');
     } catch (error) {
       console.error('🟢 Error deleting pack content:', error);
       alert('Failed to delete pack content: ' + (error as Error).message);
