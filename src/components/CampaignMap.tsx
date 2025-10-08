@@ -115,6 +115,11 @@ export default function CampaignMap({
     console.log('[CampaignMap] Center:', centerLat, centerLng, 'Zoom:', zoom);
     console.log('[CampaignMap] Campaigns count:', campaigns.length);
 
+    if (mapInstanceRef.current) {
+      console.log('[CampaignMap] Map already initialized, skipping');
+      return;
+    }
+
     getGoogleMapsApiKey()
       .then((apiKey) => {
         console.log('[CampaignMap] Got API key, loading script...');
@@ -124,6 +129,11 @@ export default function CampaignMap({
         console.log('[CampaignMap] Script loaded, initializing map...');
         if (!mapRef.current) {
           console.error('[CampaignMap] Map ref is null!');
+          return;
+        }
+
+        if (mapInstanceRef.current) {
+          console.log('[CampaignMap] Map already created during async operation, skipping');
           return;
         }
 
@@ -146,7 +156,7 @@ export default function CampaignMap({
         setError(`Failed to load map: ${err.message}`);
         setIsLoading(false);
       });
-  }, [centerLat, centerLng, zoom]);
+  }, []);
 
   useEffect(() => {
     if (!mapInstanceRef.current || isLoading) return;
