@@ -68,32 +68,43 @@ export default function PackManagement() {
   const loadPackOrders = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      const { data: packOrdersData, error: packError } = await supabase
         .from('pack_orders')
-        .select(`
-          *,
-          campaigns!pack_orders_campaign_id_fkey(title, organizer)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (packError) throw packError;
 
-      const formattedData = data.map(item => ({
-        id: item.id,
-        campaign_id: item.campaign_id,
-        user_id: item.user_id,
-        amount: item.amount,
-        pack_type: item.pack_type,
-        tshirt_sizes: item.tshirt_sizes,
-        payment_status: item.payment_status,
-        tracking_number: item.tracking_number,
-        shipping_address: item.shipping_address,
-        mobile_number: item.mobile_number,
-        created_at: item.created_at,
-        paid_at: item.paid_at,
-        campaign_title: item.campaigns.title,
-        organizer_name: item.campaigns.organizer
-      }));
+      const { data: campaignsData, error: campaignError } = await supabase
+        .from('campaigns')
+        .select('id, title, organizer');
+
+      if (campaignError) throw campaignError;
+
+      const campaignsMap = new Map(
+        campaignsData?.map(c => [c.id, c]) || []
+      );
+
+      const formattedData = (packOrdersData || []).map(item => {
+        const campaign = campaignsMap.get(item.campaign_id) || {};
+        return {
+          id: item.id,
+          campaign_id: item.campaign_id,
+          user_id: item.user_id,
+          amount: item.amount,
+          pack_type: item.pack_type,
+          tshirt_sizes: item.tshirt_sizes,
+          payment_status: item.payment_status,
+          tracking_number: item.tracking_number,
+          shipping_address: item.shipping_address,
+          mobile_number: item.mobile_number,
+          created_at: item.created_at,
+          paid_at: item.paid_at,
+          campaign_title: campaign.title || 'Unknown Campaign',
+          organizer_name: campaign.organizer || 'Unknown Organizer'
+        };
+      });
 
       setPackOrders(formattedData);
       setFilteredOrders(formattedData);
