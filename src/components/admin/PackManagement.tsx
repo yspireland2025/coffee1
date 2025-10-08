@@ -147,9 +147,6 @@ export default function PackManagement() {
   };
 
   const printPackingList = (order: PackOrder) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
     const tshirtsList = order.tshirt_sizes
       ? Object.entries(order.tshirt_sizes)
           .filter(([_, size]) => size)
@@ -318,8 +315,18 @@ export default function PackManagement() {
       </html>
     `;
 
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Please allow popups for this site to print packing lists. Or try using the print button in your browser menu.');
+      return;
+    }
+
     printWindow.document.write(html);
     printWindow.document.close();
+
+    printWindow.onload = () => {
+      printWindow.focus();
+    };
   };
 
   const getStatusBadge = (status: string) => {
