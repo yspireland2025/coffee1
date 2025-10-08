@@ -182,73 +182,89 @@ export default function CampaignMap({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
+    console.log('[CampaignMap] Adding markers for campaigns:', campaigns.length);
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
 
     const geocoder = new google.maps.Geocoder();
     const infoWindow = new google.maps.InfoWindow();
 
-    campaigns.forEach((campaign) => {
-      const address = campaign.eircode
-        ? `${campaign.eircode}, Ireland`
-        : `${campaign.location}, ${campaign.county || ''}, Ireland`;
+    const createMarker = (campaign: any, position: google.maps.LatLng | google.maps.LatLngLiteral) => {
+      const progress = (campaign.raisedAmount / campaign.goalAmount) * 100;
+      const color = progress >= 75 ? '#10b981' : progress >= 50 ? '#f59e0b' : '#ef4444';
 
-      geocoder.geocode({ address }, (results, status) => {
-        if (status === 'OK' && results && results[0]) {
-          const progress = (campaign.raisedAmount / campaign.goalAmount) * 100;
-          const color = progress >= 75 ? '#10b981' : progress >= 50 ? '#f59e0b' : '#ef4444';
-
-          const marker = new google.maps.Marker({
-            map: mapInstanceRef.current,
-            position: results[0].geometry.location,
-            title: campaign.title,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: color,
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 3,
-              scale: 12,
-            },
-          });
-
-          marker.addListener('click', () => {
-            const contentString = `
-              <div style="max-width: 300px; padding: 12px;">
-                <h3 style="font-size: 18px; font-weight: bold; margin: 0 0 12px 0;">${campaign.title}</h3>
-                <div style="margin-bottom: 8px;">
-                  <strong>Location:</strong> ${campaign.location}
-                </div>
-                <div style="margin-bottom: 8px;">
-                  <strong>Event Date:</strong> ${new Date(campaign.eventDate).toLocaleDateString('en-IE', {
-                    weekday: 'short',
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
-                </div>
-                <div style="margin-bottom: 12px;">
-                  <strong>Progress:</strong> €${campaign.raisedAmount.toLocaleString()} of €${campaign.goalAmount.toLocaleString()}
-                </div>
-                <div style="background: #e5e7eb; border-radius: 9999px; height: 8px; margin-bottom: 12px;">
-                  <div style="background: #10b981; height: 8px; border-radius: 9999px; width: ${Math.min(progress, 100)}%;"></div>
-                </div>
-                <button
-                  onclick="window.viewCampaignDetails('${campaign.id}')"
-                  style="background: #a8846d; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: 500;"
-                >
-                  View Details
-                </button>
-              </div>
-            `;
-
-            infoWindow.setContent(contentString);
-            infoWindow.open(mapInstanceRef.current, marker);
-          });
-
-          markersRef.current.push(marker);
-        }
+      const marker = new google.maps.Marker({
+        map: mapInstanceRef.current,
+        position: position,
+        title: campaign.title,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: color,
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3,
+          scale: 12,
+        },
       });
+
+      marker.addListener('click', () => {
+        const contentString = `
+          <div style="max-width: 300px; padding: 12px;">
+            <h3 style="font-size: 18px; font-weight: bold; margin: 0 0 12px 0;">${campaign.title}</h3>
+            <div style="margin-bottom: 8px;">
+              <strong>Location:</strong> ${campaign.location}
+            </div>
+            <div style="margin-bottom: 8px;">
+              <strong>Event Date:</strong> ${new Date(campaign.eventDate).toLocaleDateString('en-IE', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })}
+            </div>
+            <div style="margin-bottom: 12px;">
+              <strong>Progress:</strong> €${campaign.raisedAmount.toLocaleString()} of €${campaign.goalAmount.toLocaleString()}
+            </div>
+            <div style="background: #e5e7eb; border-radius: 9999px; height: 8px; margin-bottom: 12px;">
+              <div style="background: #10b981; height: 8px; border-radius: 9999px; width: ${Math.min(progress, 100)}%;"></div>
+            </div>
+            <button
+              onclick="window.viewCampaignDetails('${campaign.id}')"
+              style="background: #a8846d; color: white; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: 500;"
+            >
+              View Details
+            </button>
+          </div>
+        `;
+
+        infoWindow.setContent(contentString);
+        infoWindow.open(mapInstanceRef.current, marker);
+      });
+
+      markersRef.current.push(marker);
+      console.log('[CampaignMap] Marker created for:', campaign.title);
+    };
+
+    campaigns.forEach((campaign) => {
+      if (campaign.latitude && campaign.longitude) {
+        console.log('[CampaignMap] Using stored coordinates for:', campaign.title, campaign.latitude, campaign.longitude);
+        createMarker(campaign, { lat: campaign.latitude, lng: campaign.longitude });
+      } else {
+        const address = campaign.eircode
+          ? `${campaign.eircode}, Ireland`
+          : `${campaign.location}, Ireland`;
+
+        console.log('[CampaignMap] Geocoding campaign:', campaign.title, 'address:', address);
+
+        geocoder.geocode({ address }, (results, status) => {
+          console.log('[CampaignMap] Geocode result for', campaign.title, '- status:', status);
+          if (status === 'OK' && results && results[0]) {
+            createMarker(campaign, results[0].geometry.location);
+          } else {
+            console.warn('[CampaignMap] Failed to geocode:', campaign.title, 'status:', status);
+          }
+        });
+      }
     });
 
     (window as any).viewCampaignDetails = (campaignId: string) => {
