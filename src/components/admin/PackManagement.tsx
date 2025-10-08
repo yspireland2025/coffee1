@@ -78,7 +78,7 @@ export default function PackManagement() {
 
       if (error) throw error;
 
-      const formattedData = data.map(item => ({
+      const formattedData = data?.map(item => ({
         id: item.id,
         campaign_id: item.campaign_id,
         user_id: item.user_id,
@@ -91,14 +91,16 @@ export default function PackManagement() {
         mobile_number: item.mobile_number,
         created_at: item.created_at,
         paid_at: item.paid_at,
-        campaign_title: item.campaigns.title,
-        organizer_name: item.campaigns.organizer
-      }));
+        campaign_title: item.campaigns?.title || 'Unknown Campaign',
+        organizer_name: item.campaigns?.organizer || 'Unknown Organizer'
+      })) || [];
 
       setPackOrders(formattedData);
       setFilteredOrders(formattedData);
     } catch (error) {
       console.error('Error loading pack orders:', error);
+      setPackOrders([]);
+      setFilteredOrders([]);
     } finally {
       setLoading(false);
     }
