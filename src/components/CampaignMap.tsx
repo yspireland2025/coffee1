@@ -120,12 +120,22 @@ export default function CampaignMap({
       return;
     }
 
+    let isMounted = true;
+
     getGoogleMapsApiKey()
       .then((apiKey) => {
+        if (!isMounted) {
+          console.log('[CampaignMap] Component unmounted, aborting API key step');
+          return Promise.reject(new Error('Component unmounted'));
+        }
         console.log('[CampaignMap] Got API key, loading script...');
         return loadGoogleMapsScript(apiKey);
       })
       .then(() => {
+        if (!isMounted) {
+          console.log('[CampaignMap] Component unmounted, aborting map creation');
+          return;
+        }
         console.log('[CampaignMap] Script loaded, initializing map...');
         if (!mapRef.current) {
           console.error('[CampaignMap] Map ref is null!');
@@ -151,11 +161,20 @@ export default function CampaignMap({
         setIsLoading(false);
       })
       .catch((err) => {
+        if (!isMounted) {
+          console.log('[CampaignMap] Component unmounted during error, ignoring');
+          return;
+        }
         console.error('[CampaignMap] Error loading Google Maps:', err);
         console.error('[CampaignMap] Error stack:', err.stack);
         setError(`Failed to load map: ${err.message}`);
         setIsLoading(false);
       });
+
+    return () => {
+      console.log('[CampaignMap] Component unmounting, cancelling map initialization');
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
