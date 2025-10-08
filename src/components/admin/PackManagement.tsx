@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, Filter, Eye, Package, Printer,
   TrendingUp, CheckCircle, Clock, MapPin,
@@ -47,25 +47,7 @@ export default function PackManagement() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadPackOrders();
-
-    const subscription = supabase
-      .channel('pack_orders_management')
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'pack_orders' },
-        () => {
-          loadPackOrders();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const loadPackOrders = async () => {
+  const loadPackOrders = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -113,7 +95,25 @@ export default function PackManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadPackOrders();
+
+    const subscription = supabase
+      .channel('pack_orders_management')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'pack_orders' },
+        () => {
+          loadPackOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadPackOrders]);
 
   useEffect(() => {
     let filtered = packOrders;
