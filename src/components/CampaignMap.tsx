@@ -121,27 +121,16 @@ export default function CampaignMap({
     console.log('[CampaignMap] Center:', centerLat, centerLng, 'Zoom:', zoom);
     console.log('[CampaignMap] Campaigns count:', campaigns.length);
 
-    const initializeMap = async () => {
-      try {
-        console.log('[CampaignMap] Getting API key...');
-        const apiKey = await getGoogleMapsApiKey();
-
+    getGoogleMapsApiKey()
+      .then((apiKey) => {
         console.log('[CampaignMap] Got API key, loading script...');
-        await loadGoogleMapsScript(apiKey);
-
-        console.log('[CampaignMap] Script loaded, checking map ref...');
-
-        // Wait for ref to be available (with timeout)
-        let attempts = 0;
-        while (!mapRef.current && attempts < 50) {
-          console.log('[CampaignMap] Waiting for ref, attempt', attempts + 1);
-          await new Promise(resolve => setTimeout(resolve, 100));
-          attempts++;
-        }
-
+        return loadGoogleMapsScript(apiKey);
+      })
+      .then(() => {
+        console.log('[CampaignMap] Script loaded, initializing map...');
         if (!mapRef.current) {
-          console.error('[CampaignMap] Map ref is still null after waiting!');
-          throw new Error('Map container not ready');
+          console.error('[CampaignMap] Map ref is null!');
+          return;
         }
 
         console.log('[CampaignMap] Creating map instance...');
@@ -156,15 +145,13 @@ export default function CampaignMap({
         mapInstanceRef.current = map;
         console.log('[CampaignMap] Map created successfully');
         setIsLoading(false);
-      } catch (err: any) {
+      })
+      .catch((err) => {
         console.error('[CampaignMap] Error loading Google Maps:', err);
         console.error('[CampaignMap] Error stack:', err.stack);
         setError(`Failed to load map: ${err.message}`);
         setIsLoading(false);
-      }
-    };
-
-    initializeMap();
+      });
   }, [centerLat, centerLng, zoom]);
 
   useEffect(() => {
