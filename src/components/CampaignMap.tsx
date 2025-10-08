@@ -45,7 +45,13 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return new Promise((resolve, reject) => {
     console.log('[loadGoogleMapsScript] Starting...');
 
-    if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+    const isGoogleMapsReady = () => {
+      return typeof window.google === 'object' &&
+             typeof window.google.maps === 'object' &&
+             typeof window.google.maps.Map === 'function';
+    };
+
+    if (isGoogleMapsReady()) {
       console.log('[loadGoogleMapsScript] Google Maps already loaded');
       resolve();
       return;
@@ -54,7 +60,7 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
     if (document.querySelector('script[src*="maps.googleapis.com"]')) {
       console.log('[loadGoogleMapsScript] Script tag exists, waiting for load...');
       const checkGoogle = setInterval(() => {
-        if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+        if (isGoogleMapsReady()) {
           console.log('[loadGoogleMapsScript] Google Maps loaded (existing script)');
           clearInterval(checkGoogle);
           resolve();
@@ -76,7 +82,7 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
     script.onload = () => {
       console.log('[loadGoogleMapsScript] Script onload fired, waiting for google.maps...');
       const checkGoogle = setInterval(() => {
-        if (typeof window.google === 'object' && typeof window.google.maps === 'object') {
+        if (isGoogleMapsReady()) {
           console.log('[loadGoogleMapsScript] Google Maps loaded successfully');
           clearInterval(checkGoogle);
           resolve();
