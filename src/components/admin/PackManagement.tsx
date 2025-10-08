@@ -37,12 +37,27 @@ interface PackOrder {
   organizer_name: string;
 }
 
-interface PackContent {
+interface Item {
   id: string;
-  pack_type: 'free' | 'medium' | 'large';
-  item_name: string;
-  quantity: number;
+  name: string;
+  description: string | null;
   display_order: number;
+}
+
+interface PackItem {
+  id: string;
+  item_id: string;
+  pack_type: 'free' | 'medium' | 'large';
+  quantity: number;
+}
+
+interface ItemWithPacks extends Item {
+  free_quantity: number;
+  medium_quantity: number;
+  large_quantity: number;
+  free_pack_item_id: string | null;
+  medium_pack_item_id: string | null;
+  large_pack_item_id: string | null;
 }
 
 export default function PackManagement() {
@@ -56,7 +71,7 @@ export default function PackManagement() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [printOrder, setPrintOrder] = useState<PackOrder | null>(null);
-  const [packContents, setPackContents] = useState<PackContent[]>([]);
+  const [items, setItems] = useState<ItemWithPacks[]>([]);
   const [showContentsManager, setShowContentsManager] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'contents'>('orders');
 
@@ -122,23 +137,39 @@ export default function PackManagement() {
 
   const loadPackContents = async () => {
     try {
-      console.warn('🔵 LOADING pack contents from database...');
-      const { data, error } = await supabase
-        .from('pack_contents')
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
         .select('*')
         .order('display_order', { ascending: true });
 
-      console.warn('🔵 Load response - data count:', data?.length, 'error:', error);
-      console.warn('🔵 Loaded data:', data);
+      if (itemsError) throw itemsError;
 
-      if (error) throw error;
+      const { data: packItemsData, error: packItemsError } = await supabase
+        .from('pack_items')
+        .select('*');
 
-      console.warn('🔵 Setting packContents state with', data?.length, 'items');
-      setPackContents(data || []);
-      console.warn('🔵 State set complete');
+      if (packItemsError) throw packItemsError;
+
+      const itemsWithPacks: ItemWithPacks[] = (itemsData || []).map(item => {
+        const freePack = packItemsData?.find(p => p.item_id === item.id && p.pack_type === 'free');
+        const mediumPack = packItemsData?.find(p => p.item_id === item.id && p.pack_type === 'medium');
+        const largePack = packItemsData?.find(p => p.item_id === item.id && p.pack_type === 'large');
+
+        return {
+          ...item,
+          free_quantity: freePack?.quantity || 0,
+          medium_quantity: mediumPack?.quantity || 0,
+          large_quantity: largePack?.quantity || 0,
+          free_pack_item_id: freePack?.id || null,
+          medium_pack_item_id: mediumPack?.id || null,
+          large_pack_item_id: largePack?.id || null
+        };
+      });
+
+      setItems(itemsWithPacks);
     } catch (error) {
       console.error('Error loading pack contents:', error);
-      setPackContents([]);
+      setItems([]);
     }
   };
 
@@ -189,81 +220,86 @@ export default function PackManagement() {
     }, 100);
   };
 
-  const addPackContent = async (packType: 'free' | 'medium' | 'large', itemName: string, quantity: number) => {
+  const addItem = async (itemName: string, freeQty: number, mediumQty: number, largeQty: number) => {
     try {
-      const maxOrder = Math.max(...packContents.filter(c => c.pack_type === packType).map(c => c.display_order), 0);
+      const maxOrder = Math.max(...items.map(i => i.display_order), 0);
 
-      const { error } = await supabase
-        .from('pack_contents')
+      const { data: newItem, error: itemError } = await supabase
+        .from('items')
         .insert({
-          pack_type: packType,
-          item_name: itemName,
-          quantity: quantity,
+          name: itemName,
           display_order: maxOrder + 1
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (itemError) throw itemError;
+
+      const packItems = [];
+      if (freeQty > 0) packItems.push({ item_id: newItem.id, pack_type: 'free', quantity: freeQty });
+      if (mediumQty > 0) packItems.push({ item_id: newItem.id, pack_type: 'medium', quantity: mediumQty });
+      if (largeQty > 0) packItems.push({ item_id: newItem.id, pack_type: 'large', quantity: largeQty });
+
+      if (packItems.length > 0) {
+        const { error: packItemsError } = await supabase
+          .from('pack_items')
+          .insert(packItems);
+
+        if (packItemsError) throw packItemsError;
+      }
 
       await loadPackContents();
     } catch (error) {
-      console.error('Error adding pack content:', error);
-      alert('Failed to add pack content');
+      console.error('Error adding item:', error);
+      alert('Failed to add item');
     }
   };
 
-  const updatePackContent = async (id: string, itemName: string, quantity: number) => {
+  const updateItem = async (itemId: string, itemName: string, freeQty: number, mediumQty: number, largeQty: number, freePIId: string | null, mediumPIId: string | null, largePIId: string | null) => {
+    try {
+      const { error: itemError } = await supabase
+        .from('items')
+        .update({ name: itemName })
+        .eq('id', itemId);
+
+      if (itemError) throw itemError;
+
+      const updatePackItem = async (packItemId: string | null, packType: 'free' | 'medium' | 'large', qty: number) => {
+        if (qty > 0) {
+          if (packItemId) {
+            await supabase.from('pack_items').update({ quantity: qty }).eq('id', packItemId);
+          } else {
+            await supabase.from('pack_items').insert({ item_id: itemId, pack_type: packType, quantity: qty });
+          }
+        } else if (packItemId) {
+          await supabase.from('pack_items').delete().eq('id', packItemId);
+        }
+      };
+
+      await updatePackItem(freePIId, 'free', freeQty);
+      await updatePackItem(mediumPIId, 'medium', mediumQty);
+      await updatePackItem(largePIId, 'large', largeQty);
+
+      await loadPackContents();
+    } catch (error) {
+      console.error('Error updating item:', error);
+      alert('Failed to update item');
+    }
+  };
+
+  const deleteItem = async (itemId: string) => {
     try {
       const { error } = await supabase
-        .from('pack_contents')
-        .update({
-          item_name: itemName,
-          quantity: quantity
-        })
-        .eq('id', id);
+        .from('items')
+        .delete()
+        .eq('id', itemId);
 
       if (error) throw error;
 
       await loadPackContents();
     } catch (error) {
-      console.error('Error updating pack content:', error);
-      alert('Failed to update pack content');
-    }
-  };
-
-  const deletePackContent = async (id: string) => {
-    try {
-      console.warn('🟢 DELETE FUNCTION CALLED with id:', id);
-      console.warn('🟢 Current packContents state has', packContents.length, 'items');
-      console.warn('🟢 All IDs in state:', packContents.map(c => c.id));
-      console.warn('🟢 Does ID exist in state?', packContents.some(c => c.id === id));
-
-      const { data: { user } } = await supabase.auth.getUser();
-      console.warn('🟢 Current user:', user?.id);
-
-      console.warn('🟢 Calling Supabase delete...');
-      const { data, error } = await supabase
-        .from('pack_contents')
-        .delete()
-        .eq('id', id)
-        .select();
-
-      console.warn('🟢 Delete response - data:', data, 'error:', error);
-
-      if (error) {
-        console.error('🟢 Delete error:', error);
-        throw error;
-      }
-
-      if (!data || data.length === 0) {
-        console.error('🟢 WARNING: No rows were deleted. The item does not exist in the database!');
-      }
-
-      console.warn('🟢 Reloading pack contents from database...');
-      await loadPackContents();
-      console.warn('🟢 Pack contents reloaded');
-    } catch (error) {
-      console.error('🟢 Error deleting pack content:', error);
-      alert('Failed to delete pack content: ' + (error as Error).message);
+      console.error('Error deleting item:', error);
+      alert('Failed to delete item');
     }
   };
 
@@ -694,7 +730,7 @@ export default function PackManagement() {
                 <div className="mb-8">
                   <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Pack Contents</h2>
                   <div className="bg-gray-100 p-4 rounded">
-                    {packContents.filter(c => c.pack_type === printOrder.pack_type).length > 0 ? (
+                    {items.length > 0 ? (
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-gray-300">
@@ -704,15 +740,25 @@ export default function PackManagement() {
                           </tr>
                         </thead>
                         <tbody>
-                          {packContents
-                            .filter(c => c.pack_type === printOrder.pack_type)
-                            .map((item) => (
-                              <tr key={item.id} className="border-b border-gray-200">
-                                <td className="py-2">{item.item_name}</td>
-                                <td className="text-right py-2">{item.quantity}</td>
-                                <td className="text-right py-2">☐</td>
-                              </tr>
-                            ))}
+                          {items
+                            .filter(item => {
+                              const qty = printOrder.pack_type === 'free' ? item.free_quantity :
+                                         printOrder.pack_type === 'medium' ? item.medium_quantity :
+                                         item.large_quantity;
+                              return qty > 0;
+                            })
+                            .map((item) => {
+                              const qty = printOrder.pack_type === 'free' ? item.free_quantity :
+                                         printOrder.pack_type === 'medium' ? item.medium_quantity :
+                                         item.large_quantity;
+                              return (
+                                <tr key={item.id} className="border-b border-gray-200">
+                                  <td className="py-2">{item.name}</td>
+                                  <td className="text-right py-2">{qty}</td>
+                                  <td className="text-right py-2">☐</td>
+                                </tr>
+                              );
+                            })}
                         </tbody>
                       </table>
                     ) : (
@@ -797,10 +843,10 @@ export default function PackManagement() {
 
       {activeTab === 'contents' && (
         <PackContentsManager
-          packContents={packContents}
-          onAddContent={addPackContent}
-          onUpdateContent={updatePackContent}
-          onDeleteContent={deletePackContent}
+          items={items}
+          onAddItem={addItem}
+          onUpdateItem={updateItem}
+          onDeleteItem={deleteItem}
         />
       )}
     </div>
