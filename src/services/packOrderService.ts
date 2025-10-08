@@ -202,6 +202,8 @@ class PackOrderService {
         campaign_id: item.campaign_id,
         user_id: item.user_id,
         amount: item.amount,
+        pack_type: item.pack_type,
+        tshirt_sizes: item.tshirt_sizes,
         payment_status: item.payment_status,
         stripe_payment_intent_id: item.stripe_payment_intent_id,
         stripe_payment_link_id: item.stripe_payment_link_id,
@@ -216,8 +218,8 @@ class PackOrderService {
       return { data: formattedData };
     } catch (error) {
       console.error('Error fetching all pack orders:', error);
-      return { 
-        error: error instanceof Error ? error.message : 'Failed to fetch pack orders' 
+      return {
+        error: error instanceof Error ? error.message : 'Failed to fetch pack orders'
       };
     }
   }
@@ -240,6 +242,8 @@ class PackOrderService {
         campaign_id: item.campaign_id,
         user_id: item.user_id,
         amount: item.amount,
+        pack_type: item.pack_type,
+        tshirt_sizes: item.tshirt_sizes,
         payment_status: item.payment_status,
         stripe_payment_intent_id: item.stripe_payment_intent_id,
         stripe_payment_link_id: item.stripe_payment_link_id,

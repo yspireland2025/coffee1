@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Search, Filter, Eye, Download, Package, Calendar,
   TrendingUp, AlertTriangle, CheckCircle, Clock, MapPin,
-  Mail, Phone, ExternalLink, RefreshCw
+  Mail, Phone, ExternalLink, RefreshCw, X
 } from 'lucide-react';
 import { packOrderService, PackOrder } from '../../services/packOrderService';
+import { supabase } from '../../lib/supabase';
 
 interface PackOrderWithCampaign extends PackOrder {
   campaign_title: string;
@@ -371,6 +372,37 @@ export default function PackOrderManagement() {
                             <p className="text-sm font-medium text-gray-900">Organizer</p>
                             <p className="text-sm text-gray-600">{selectedOrder.organizer_name}</p>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-4">Pack Details</h3>
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Pack Type</p>
+                            <p className="text-sm text-gray-600 capitalize">{selectedOrder.pack_type}</p>
+                          </div>
+                          {selectedOrder.tshirt_sizes && Object.keys(selectedOrder.tshirt_sizes).length > 0 && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-900 mb-2">T-Shirt Sizes</p>
+                              <div className="space-y-1">
+                                {selectedOrder.tshirt_sizes.shirt_1 && (
+                                  <p className="text-sm text-gray-600">Shirt 1: {selectedOrder.tshirt_sizes.shirt_1}</p>
+                                )}
+                                {selectedOrder.tshirt_sizes.shirt_2 && (
+                                  <p className="text-sm text-gray-600">Shirt 2: {selectedOrder.tshirt_sizes.shirt_2}</p>
+                                )}
+                                {selectedOrder.tshirt_sizes.shirt_3 && (
+                                  <p className="text-sm text-gray-600">Shirt 3: {selectedOrder.tshirt_sizes.shirt_3}</p>
+                                )}
+                                {selectedOrder.tshirt_sizes.shirt_4 && (
+                                  <p className="text-sm text-gray-600">Shirt 4: {selectedOrder.tshirt_sizes.shirt_4}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
