@@ -122,14 +122,20 @@ export default function PackManagement() {
 
   const loadPackContents = async () => {
     try {
+      console.warn('🔵 LOADING pack contents from database...');
       const { data, error } = await supabase
         .from('pack_contents')
         .select('*')
         .order('display_order', { ascending: true });
 
+      console.warn('🔵 Load response - data count:', data?.length, 'error:', error);
+      console.warn('🔵 Loaded data:', data);
+
       if (error) throw error;
 
+      console.warn('🔵 Setting packContents state with', data?.length, 'items');
       setPackContents(data || []);
+      console.warn('🔵 State set complete');
     } catch (error) {
       console.error('Error loading pack contents:', error);
       setPackContents([]);
