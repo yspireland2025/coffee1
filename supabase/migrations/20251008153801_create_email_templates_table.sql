@@ -1,84 +1,83 @@
-import { supabase } from '../lib/supabase';
+/*
+  # Create Email Templates Table
 
-interface EmailTemplateFromDB {
-  id: string;
-  type: string;
-  subject: string;
-  html_content: string;
-  variables: string[];
-  is_active: boolean;
-}
+  1. New Tables
+    - `email_templates`
+      - `id` (uuid, primary key)
+      - `name` (text) - Display name of the template
+      - `type` (text) - Template type identifier (donation_receipt, campaign_approved, etc.)
+      - `subject` (text) - Email subject line with variable placeholders
+      - `html_content` (text) - HTML email content with variable placeholders
+      - `variables` (jsonb) - Array of variable names available in this template
+      - `is_active` (boolean) - Whether this template is active
+      - `created_at` (timestamptz)
+      - `updated_at` (timestamptz)
 
-export interface EmailTemplate {
-  donation_receipt: {
-    donor_name: string;
-    donation_amount: string;
-    campaign_title: string;
-    organizer_name: string;
-    donation_date: string;
-    donation_id: string;
-    campaign_url: string;
-  };
-  campaign_approved: {
-    organizer_name: string;
-    campaign_title: string;
-    goal_amount: string;
-    event_date: string;
-    event_location: string;
-    campaign_url: string;
-    share_url: string;
-  };
-  campaign_rejected: {
-    organizer_name: string;
-    campaign_title: string;
-    rejection_reason: string;
-  };
-  welcome: {
-    user_name: string;
-    platform_url: string;
-  };
-  password_reset: {
-    user_name: string;
-    reset_url: string;
-    expires_at: string;
-  };
-  message_to_host: {
-    host_name: string;
-    campaign_title: string;
-    sender_name: string;
-    sender_email: string;
-    sender_mobile: string;
-    message: string;
-  };
-  message_confirmation: {
-    sender_name: string;
-    campaign_title: string;
-    message: string;
-  };
-  contact_form: {
-    sender_name: string;
-    sender_email: string;
-    sender_mobile: string;
-    message: string;
-    submitted_at: string;
-  };
-  contact_confirmation: {
-    sender_name: string;
-    message: string;
-    submitted_at: string;
-  };
-}
+  2. Security
+    - Enable RLS on `email_templates` table
+    - Admin users (role = 'admin') can read and update templates
+    - Public users cannot access templates directly (emails sent via edge function)
 
-class EmailService {
-  private templateCache: Record<string, { subject: string; html: string }> = {};
-  private cacheExpiry: number = 0;
-  private readonly CACHE_DURATION = 5 * 60 * 1000;
+  3. Data
+    - Seed with default email templates for all types
+*/
 
-  private fallbackTemplates: Record<string, { subject: string; html: string }> = {
-    donation_receipt: {
-      subject: 'Thank you for your donation to {{campaign_title}}',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+-- Create email_templates table
+CREATE TABLE IF NOT EXISTS email_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  type text UNIQUE NOT NULL,
+  subject text NOT NULL,
+  html_content text NOT NULL,
+  variables jsonb DEFAULT '[]'::jsonb,
+  is_active boolean DEFAULT true,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE email_templates ENABLE ROW LEVEL SECURITY;
+
+-- Admin can read all templates (using role from users table)
+CREATE POLICY "Admins can read email templates"
+  ON email_templates
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
+
+-- Admin can update templates
+CREATE POLICY "Admins can update email templates"
+  ON email_templates
+  FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
+
+-- Insert default templates
+INSERT INTO email_templates (name, type, subject, html_content, variables) VALUES
+(
+  'Donation Receipt',
+  'donation_receipt',
+  'Thank you for your donation to {{campaign_title}}',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Thank You!</h1>
     <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Your donation makes a real difference</p>
@@ -121,12 +120,14 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    },
-    campaign_approved: {
-      subject: 'Your Coffee Morning campaign has been approved!',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["donor_name", "donation_amount", "campaign_title", "organizer_name", "donation_date", "donation_id", "campaign_url"]'::jsonb
+),
+(
+  'Campaign Approved',
+  'campaign_approved',
+  'Your Coffee Morning campaign has been approved!',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Congratulations!</h1>
     <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Your campaign is now live</p>
@@ -165,12 +166,14 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    },
-    pack_payment_pending: {
-      subject: 'Complete your Coffee Morning Pack order - {{campaign_title}}',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["organizer_name", "campaign_title", "goal_amount", "event_date", "event_location", "campaign_url", "share_url"]'::jsonb
+),
+(
+  'Pack Payment Pending',
+  'pack_payment_pending',
+  'Complete your Coffee Morning Pack order - {{campaign_title}}',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #f59e0b, #d97706); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Almost There!</h1>
     <p style="color: #fef3c7; margin: 10px 0 0 0; font-size: 16px;">Complete your pack order to activate your campaign</p>
@@ -224,12 +227,14 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #f59e0b;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    },
-    welcome: {
-      subject: 'Welcome to the Coffee Morning Challenge!',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["organizer_name", "campaign_title", "payment_link", "pack_order_id"]'::jsonb
+),
+(
+  'Welcome Email',
+  'welcome',
+  'Welcome to the Coffee Morning Challenge!',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Welcome!</h1>
     <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Join the Coffee Morning Challenge</p>
@@ -240,12 +245,12 @@ class EmailService {
     
     <p style="font-size: 16px; color: #374151; line-height: 1.6;">
       Welcome to the Youth Suicide Prevention Ireland Coffee Morning Challenge! 
-      We're thrilled to have you join our community of changemakers.
+      We''re thrilled to have you join our community of changemakers.
     </p>
     
     <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Every coffee morning creates connections that save lives. Whether you're hosting 
-      your own event or supporting others, you're making a real difference in the fight 
+      Every coffee morning creates connections that save lives. Whether you''re hosting 
+      your own event or supporting others, you''re making a real difference in the fight 
       against youth suicide.
     </p>
     
@@ -270,12 +275,14 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    },
-    message_to_host: {
-      subject: 'New message about your Coffee Morning campaign: {{campaign_title}}',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["user_name", "platform_url"]'::jsonb
+),
+(
+  'Message to Host',
+  'message_to_host',
+  'New message about your Coffee Morning campaign: {{campaign_title}}',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">New Message</h1>
     <p style="color: #dbeafe; margin: 10px 0 0 0; font-size: 16px;">Someone wants to connect with you</p>
@@ -285,7 +292,7 @@ class EmailService {
     <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">Dear {{host_name}},</p>
     
     <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      You've received a new message about your Coffee Morning campaign 
+      You''ve received a new message about your Coffee Morning campaign 
       <strong>"{{campaign_title}}"</strong>.
     </p>
     
@@ -293,7 +300,7 @@ class EmailService {
       <h3 style="color: #3b82f6; margin: 0 0 10px 0;">Contact Details</h3>
       <p style="margin: 5px 0; color: #374151;"><strong>Name:</strong> {{sender_name}}</p>
       <p style="margin: 5px 0; color: #374151;"><strong>Email:</strong> {{sender_email}}</p>
-      {{#if sender_mobile}}<p style="margin: 5px 0; color: #374151;"><strong>Mobile:</strong> {{sender_mobile}}</p>{{/if}}
+      <p style="margin: 5px 0; color: #374151;"><strong>Mobile:</strong> {{sender_mobile}}</p>
     </div>
     
     <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
@@ -312,12 +319,14 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #3b82f6;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    },
-    message_confirmation: {
-      subject: 'Message sent confirmation - {{campaign_title}}',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["host_name", "campaign_title", "sender_name", "sender_email", "sender_mobile", "message"]'::jsonb
+),
+(
+  'Message Confirmation',
+  'message_confirmation',
+  'Message sent confirmation - {{campaign_title}}',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Message Sent</h1>
     <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Your message has been delivered</p>
@@ -342,7 +351,7 @@ class EmailService {
     </p>
     
     <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      If you'd like to support this campaign, you can also make a donation through our platform.
+      If you''d like to support this campaign, you can also make a donation through our platform.
     </p>
   </div>
   
@@ -352,12 +361,14 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    },
-    contact_form: {
-      subject: 'New contact form submission from {{sender_name}}',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["sender_name", "campaign_title", "message"]'::jsonb
+),
+(
+  'Contact Form',
+  'contact_form',
+  'New contact form submission from {{sender_name}}',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">New Contact Message</h1>
     <p style="color: #c7d2fe; margin: 10px 0 0 0; font-size: 16px;">Coffee Morning Platform</p>
@@ -388,12 +399,14 @@ class EmailService {
       Coffee Morning Platform Contact Form
     </p>
   </div>
-</div>`
-    },
-    contact_confirmation: {
-      subject: 'Thank you for contacting YSPI - We\'ll be in touch soon',
-      html: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+</div>',
+  '["sender_name", "sender_email", "sender_mobile", "message", "submitted_at"]'::jsonb
+),
+(
+  'Contact Confirmation',
+  'contact_confirmation',
+  'Thank you for contacting YSPI - We''ll be in touch soon',
+  '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
     <h1 style="color: white; margin: 0; font-size: 28px;">Message Received</h1>
     <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Thank you for reaching out</p>
@@ -404,7 +417,7 @@ class EmailService {
     
     <p style="font-size: 16px; color: #374151; line-height: 1.6;">
       Thank you for contacting Youth Suicide Prevention Ireland about our Coffee Morning Challenge. 
-      We've received your message and will respond within 24 hours during business days.
+      We''ve received your message and will respond within 24 hours during business days.
     </p>
     
     <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
@@ -427,246 +440,23 @@ class EmailService {
       <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
     </p>
   </div>
-</div>`
-    }
-  };
+</div>',
+  '["sender_name", "message", "submitted_at"]'::jsonb
+);
 
-  private async loadTemplatesFromDatabase(): Promise<Record<string, { subject: string; html: string }>> {
-    try {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('type, subject, html_content, is_active')
-        .eq('is_active', true);
+-- Create index on type for faster lookups
+CREATE INDEX IF NOT EXISTS idx_email_templates_type ON email_templates(type);
 
-      if (error) throw error;
+-- Create updated_at trigger
+CREATE OR REPLACE FUNCTION update_email_templates_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-      if (!data || data.length === 0) {
-        console.warn('No templates found in database, using fallback templates');
-        return this.fallbackTemplates;
-      }
-
-      const templates: Record<string, { subject: string; html: string }> = {};
-      data.forEach((template: any) => {
-        templates[template.type] = {
-          subject: template.subject,
-          html: template.html_content
-        };
-      });
-
-      return templates;
-    } catch (error) {
-      console.error('Failed to load templates from database:', error);
-      return this.fallbackTemplates;
-    }
-  }
-
-  private async getTemplates(): Promise<Record<string, { subject: string; html: string }>> {
-    const now = Date.now();
-
-    if (Object.keys(this.templateCache).length === 0 || now > this.cacheExpiry) {
-      this.templateCache = await this.loadTemplatesFromDatabase();
-      this.cacheExpiry = now + this.CACHE_DURATION;
-    }
-
-    return this.templateCache;
-  }
-
-  private replaceTemplateVariables(template: string, data: Record<string, string>): string {
-    let result = template;
-    Object.entries(data).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      result = result.replace(regex, value);
-    });
-    
-    // Handle conditional blocks like {{#if sender_mobile}}
-    result = result.replace(/{{#if\s+(\w+)}}(.*?){{\/if}}/gs, (match, field, content) => {
-      return data[field] && data[field].trim() ? content : '';
-    });
-    
-    return result;
-  }
-
-  async sendEmail(
-    to: string,
-    templateType: keyof EmailTemplate,
-    templateData: EmailTemplate[typeof templateType]
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const templates = await this.getTemplates();
-      const template = templates[templateType];
-
-      if (!template) {
-        throw new Error(`Template ${templateType} not found`);
-      }
-
-      const subject = this.replaceTemplateVariables(template.subject, templateData as Record<string, string>);
-      const html = this.replaceTemplateVariables(template.html, templateData as Record<string, string>);
-
-      console.log('Sending email:', { to, templateType, subject });
-
-      // Hardcoded Supabase configuration
-      const supabaseUrl = 'https://0ec90b57d6e95fcbda19832f.supabase.co';
-      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJib2x0IiwicmVmIjoiMGVjOTBiNTdkNmU5NWZjYmRhMTk4MzJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4ODE1NzQsImV4cCI6MTc1ODg4MTU3NH0.9I8-U0x86Ak8t2DGaIk0HfvTSLsAyzdnz-Nw00mMkKw';
-
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration missing');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to,
-          subject,
-          html,
-          templateType,
-          templateData
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send email');
-      }
-
-      const result = await response.json();
-      console.log('Email sent successfully:', result);
-
-      return { success: true };
-    } catch (error) {
-      console.error('Email service error:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      };
-    }
-  }
-
-  async sendDonationReceipt(donationData: {
-    donorEmail: string;
-    donorName: string;
-    amount: number;
-    campaignTitle: string;
-    organizerName: string;
-    donationId: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(donationData.donorEmail, 'donation_receipt', {
-      donor_name: donationData.donorName,
-      donation_amount: donationData.amount.toFixed(2),
-      campaign_title: donationData.campaignTitle,
-      organizer_name: donationData.organizerName,
-      donation_date: new Date().toLocaleDateString(),
-      donation_id: donationData.donationId,
-      campaign_url: `${window.location.origin}/#campaign-${donationData.donationId}`
-    });
-  }
-
-  async sendCampaignApproval(campaignData: {
-    organizerEmail: string;
-    organizerName: string;
-    campaignTitle: string;
-    goalAmount: number;
-    eventDate: string;
-    eventLocation: string;
-    campaignId: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(campaignData.organizerEmail, 'campaign_approved', {
-      organizer_name: campaignData.organizerName,
-      campaign_title: campaignData.campaignTitle,
-      goal_amount: campaignData.goalAmount.toLocaleString(),
-      event_date: new Date(campaignData.eventDate).toLocaleDateString(),
-      event_location: campaignData.eventLocation,
-      campaign_url: `${window.location.origin}/#campaign-${campaignData.campaignId}`,
-      share_url: `${window.location.origin}/#campaign-${campaignData.campaignId}`
-    });
-  }
-
-  async sendPackPaymentPending(packData: {
-    organizerEmail: string;
-    organizerName: string;
-    campaignTitle: string;
-    paymentLink: string;
-    packOrderId: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(packData.organizerEmail, 'pack_payment_pending', {
-      organizer_name: packData.organizerName,
-      campaign_title: packData.campaignTitle,
-      payment_link: packData.paymentLink,
-      pack_order_id: packData.packOrderId
-    });
-  }
-
-  async sendWelcomeEmail(userData: {
-    email: string;
-    name: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(userData.email, 'welcome', {
-      user_name: userData.name,
-      platform_url: window.location.origin
-    });
-  }
-
-  async sendMessageToHost(messageData: {
-    hostEmail: string;
-    hostName: string;
-    campaignTitle: string;
-    senderName: string;
-    senderEmail: string;
-    senderMobile: string;
-    message: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(messageData.hostEmail, 'message_to_host', {
-      host_name: messageData.hostName,
-      campaign_title: messageData.campaignTitle,
-      sender_name: messageData.senderName,
-      sender_email: messageData.senderEmail,
-      sender_mobile: messageData.senderMobile || '',
-      message: messageData.message
-    });
-  }
-
-  async sendMessageConfirmation(confirmationData: {
-    senderEmail: string;
-    senderName: string;
-    campaignTitle: string;
-    message: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(confirmationData.senderEmail, 'message_confirmation', {
-      sender_name: confirmationData.senderName,
-      campaign_title: confirmationData.campaignTitle,
-      message: confirmationData.message
-    });
-  }
-
-  async sendContactForm(contactData: {
-    senderName: string;
-    senderEmail: string;
-    senderMobile: string;
-    message: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail('admin@yspi.ie', 'contact_form', {
-      sender_name: contactData.senderName,
-      sender_email: contactData.senderEmail,
-      sender_mobile: contactData.senderMobile || 'Not provided',
-      message: contactData.message,
-      submitted_at: new Date().toLocaleString()
-    });
-  }
-
-  async sendContactConfirmation(confirmationData: {
-    senderEmail: string;
-    senderName: string;
-    message: string;
-  }): Promise<{ success: boolean; error?: string }> {
-    return this.sendEmail(confirmationData.senderEmail, 'contact_confirmation', {
-      sender_name: confirmationData.senderName,
-      message: confirmationData.message,
-      submitted_at: new Date().toLocaleString()
-    });
-  }
-}
-
-export const emailService = new EmailService();
+CREATE TRIGGER update_email_templates_updated_at
+  BEFORE UPDATE ON email_templates
+  FOR EACH ROW
+  EXECUTE FUNCTION update_email_templates_updated_at();

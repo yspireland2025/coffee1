@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Mail, Edit, Save, Eye, Copy, RefreshCw, Plus, Trash2,
   AlertCircle, CheckCircle, Code, Type, Image, Link
 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
-  type: 'donation_receipt' | 'campaign_approved' | 'campaign_rejected' | 'welcome' | 'password_reset' | 'campaign_update';
+  type: string;
   content: string;
   variables: string[];
   isActive: boolean;
@@ -27,168 +28,73 @@ export default function EmailTemplateManager() {
     isActive: true
   });
 
-  // Mock data - replace with actual API calls
   useEffect(() => {
-    const mockTemplates: EmailTemplate[] = [
-      {
-        id: '1',
-        name: 'Donation Receipt',
-        subject: 'Thank you for your donation to {{campaign_title}}',
-        type: 'donation_receipt',
-        content: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">Thank You!</h1>
-    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Your donation makes a real difference</p>
-  </div>
-  
-  <div style="padding: 30px; background: white;">
-    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">Dear {{donor_name}},</p>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Thank you for your generous donation of <strong>€{{donation_amount}}</strong> to support 
-      <strong>{{campaign_title}}</strong> organized by {{organizer_name}}.
-    </p>
-    
-    <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h3 style="color: #059669; margin: 0 0 10px 0;">Donation Details</h3>
-      <p style="margin: 5px 0; color: #374151;"><strong>Amount:</strong> €{{donation_amount}}</p>
-      <p style="margin: 5px 0; color: #374151;"><strong>Date:</strong> {{donation_date}}</p>
-      <p style="margin: 5px 0; color: #374151;"><strong>Campaign:</strong> {{campaign_title}}</p>
-      <p style="margin: 5px 0; color: #374151;"><strong>Reference:</strong> {{donation_id}}</p>
-    </div>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Your support helps Youth Suicide Prevention Ireland continue our vital work in preventing 
-      youth suicide through education, support, and community engagement.
-    </p>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      This email serves as your donation receipt for tax purposes.
-    </p>
-    
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{campaign_url}}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Campaign</a>
-    </div>
-  </div>
-  
-  <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-      Youth Suicide Prevention Ireland<br>
-      Registered Charity No. CHY 20866<br>
-      <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
-    </p>
-  </div>
-</div>`,
-        variables: ['donor_name', 'donation_amount', 'campaign_title', 'organizer_name', 'donation_date', 'donation_id', 'campaign_url'],
-        isActive: true,
-        lastModified: '2025-01-24T10:30:00Z'
-      },
-      {
-        id: '2',
-        name: 'Campaign Approved',
-        subject: 'Your Coffee Morning campaign has been approved!',
-        type: 'campaign_approved',
-        content: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">Congratulations!</h1>
-    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Your campaign is now live</p>
-  </div>
-  
-  <div style="padding: 30px; background: white;">
-    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">Dear {{organizer_name}},</p>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Great news! Your Coffee Morning campaign <strong>"{{campaign_title}}"</strong> has been approved 
-      and is now live on our platform.
-    </p>
-    
-    <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
-      <h3 style="color: #059669; margin: 0 0 10px 0;">Campaign Details</h3>
-      <p style="margin: 5px 0; color: #374151;"><strong>Title:</strong> {{campaign_title}}</p>
-      <p style="margin: 5px 0; color: #374151;"><strong>Goal:</strong> €{{goal_amount}}</p>
-      <p style="margin: 5px 0; color: #374151;"><strong>Event Date:</strong> {{event_date}}</p>
-      <p style="margin: 5px 0; color: #374151;"><strong>Location:</strong> {{event_location}}</p>
-    </div>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Your campaign is now visible to supporters across Ireland. Start sharing your campaign 
-      with friends, family, and your community to maximize your impact.
-    </p>
-    
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{campaign_url}}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">View Your Campaign</a>
-      <a href="{{share_url}}" style="background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Share Campaign</a>
-    </div>
-  </div>
-  
-  <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-      Youth Suicide Prevention Ireland<br>
-      <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
-    </p>
-  </div>
-</div>`,
-        variables: ['organizer_name', 'campaign_title', 'goal_amount', 'event_date', 'event_location', 'campaign_url', 'share_url'],
-        isActive: true,
-        lastModified: '2025-01-24T09:15:00Z'
-      },
-      {
-        id: '3',
-        name: 'Welcome Email',
-        subject: 'Welcome to the Coffee Morning Challenge!',
-        type: 'welcome',
-        content: `
-<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <div style="background: linear-gradient(135deg, #059669, #10b981); padding: 30px; text-align: center;">
-    <h1 style="color: white; margin: 0; font-size: 28px;">Welcome!</h1>
-    <p style="color: #d1fae5; margin: 10px 0 0 0; font-size: 16px;">Join the Coffee Morning Challenge</p>
-  </div>
-  
-  <div style="padding: 30px; background: white;">
-    <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">Dear {{user_name}},</p>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Welcome to the Youth Suicide Prevention Ireland Coffee Morning Challenge! 
-      We're thrilled to have you join our community of changemakers.
-    </p>
-    
-    <p style="font-size: 16px; color: #374151; line-height: 1.6;">
-      Every coffee morning creates connections that save lives. Whether you're hosting 
-      your own event or supporting others, you're making a real difference in the fight 
-      against youth suicide.
-    </p>
-    
-    <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h3 style="color: #059669; margin: 0 0 15px 0;">Get Started</h3>
-      <ul style="color: #374151; line-height: 1.8; padding-left: 20px;">
-        <li>Browse active coffee morning campaigns</li>
-        <li>Support campaigns that resonate with you</li>
-        <li>Create your own coffee morning event</li>
-        <li>Share campaigns with your network</li>
-      </ul>
-    </div>
-    
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="{{platform_url}}" style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Explore Campaigns</a>
-    </div>
-  </div>
-  
-  <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-    <p style="color: #6b7280; font-size: 14px; margin: 0;">
-      Youth Suicide Prevention Ireland<br>
-      <a href="mailto:admin@yspi.ie" style="color: #059669;">admin@yspi.ie</a> | 1800 828 888
-    </p>
-  </div>
-</div>`,
-        variables: ['user_name', 'platform_url'],
-        isActive: true,
-        lastModified: '2025-01-23T16:20:00Z'
-      }
-    ];
-    setTemplates(mockTemplates);
+    loadTemplates();
   }, []);
+
+  const loadTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('email_templates')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedTemplates: EmailTemplate[] = data.map((template: any) => ({
+          id: template.id,
+          name: template.name,
+          subject: template.subject,
+          type: template.type,
+          content: template.html_content,
+          variables: template.variables || [],
+          isActive: template.is_active,
+          lastModified: template.updated_at
+        }));
+        setTemplates(formattedTemplates);
+      }
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  };
+
+  const showToast = (message: string, isError: boolean = false) => {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 ${isError ? 'bg-red-100 border-red-200 text-red-800' : 'bg-green-100 border-green-200 text-green-800'} border px-6 py-3 rounded-lg shadow-lg z-50`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 3000);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!selectedTemplate) return;
+
+    try {
+      const { error } = await supabase
+        .from('email_templates')
+        .update({
+          name: editForm.name,
+          subject: editForm.subject,
+          html_content: editForm.content,
+          is_active: editForm.isActive,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedTemplate.id);
+
+      if (error) throw error;
+
+      await loadTemplates();
+      setIsEditing(false);
+      showToast('Template saved successfully!');
+    } catch (error) {
+      console.error('Failed to save template:', error);
+      showToast('Failed to save template', true);
+    }
+  };
+
 
   const handleEditTemplate = (template: EmailTemplate) => {
     setSelectedTemplate(template);
@@ -202,32 +108,6 @@ export default function EmailTemplateManager() {
     setPreviewMode(false);
   };
 
-  const handleSaveTemplate = () => {
-    if (selectedTemplate) {
-      setTemplates(prev => prev.map(template =>
-        template.id === selectedTemplate.id
-          ? {
-              ...template,
-              name: editForm.name,
-              subject: editForm.subject,
-              content: editForm.content,
-              isActive: editForm.isActive,
-              lastModified: new Date().toISOString()
-            }
-          : template
-      ));
-      setIsEditing(false);
-      
-      // Show success toast
-      const successToast = document.createElement('div');
-      successToast.className = 'fixed top-4 right-4 bg-green-100 border border-green-200 text-green-800 px-6 py-3 rounded-lg shadow-lg z-50';
-      successToast.innerHTML = '✅ Template saved successfully!';
-      document.body.appendChild(successToast);
-      setTimeout(() => {
-        document.body.removeChild(successToast);
-      }, 3000);
-    }
-  };
 
   const handlePreview = (template: EmailTemplate) => {
     setSelectedTemplate(template);
