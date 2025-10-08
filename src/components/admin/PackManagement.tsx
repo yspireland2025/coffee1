@@ -46,6 +46,7 @@ export default function PackManagement() {
   const [editingTracking, setEditingTracking] = useState<string | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [loading, setLoading] = useState(true);
+  const [printOrder, setPrintOrder] = useState<PackOrder | null>(null);
 
   useEffect(() => {
     loadPackOrders();
@@ -147,186 +148,10 @@ export default function PackManagement() {
   };
 
   const printPackingList = (order: PackOrder) => {
-    const tshirtsList = order.tshirt_sizes
-      ? Object.entries(order.tshirt_sizes)
-          .filter(([_, size]) => size)
-          .map(([key, size]) => `${key.replace('shirt_', 'T-Shirt ')}: ${size}`)
-          .join('<br>')
-      : 'No t-shirts ordered';
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Packing List - ${order.campaign_title}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 40px;
-              max-width: 800px;
-              margin: 0 auto;
-            }
-            .header {
-              border-bottom: 3px solid #000;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 28px;
-            }
-            .section {
-              margin-bottom: 25px;
-              page-break-inside: avoid;
-            }
-            .section h2 {
-              font-size: 18px;
-              margin-bottom: 10px;
-              color: #333;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 5px;
-            }
-            .info-grid {
-              display: grid;
-              grid-template-columns: 150px 1fr;
-              gap: 8px;
-            }
-            .info-label {
-              font-weight: bold;
-              color: #555;
-            }
-            .info-value {
-              color: #000;
-            }
-            .pack-type {
-              display: inline-block;
-              padding: 5px 15px;
-              background: #f0f0f0;
-              border-radius: 5px;
-              font-weight: bold;
-              text-transform: uppercase;
-            }
-            .address-box {
-              border: 2px solid #000;
-              padding: 15px;
-              margin-top: 10px;
-              background: #f9f9f9;
-            }
-            .tracking-box {
-              border: 2px dashed #666;
-              padding: 15px;
-              margin-top: 10px;
-              background: #fff;
-              min-height: 50px;
-            }
-            @media print {
-              body { padding: 20px; }
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>PACKING LIST</h1>
-            <p style="margin: 5px 0 0 0; color: #666;">Order ID: ${order.id}</p>
-          </div>
-
-          <div class="section">
-            <h2>Campaign Information</h2>
-            <div class="info-grid">
-              <div class="info-label">Campaign:</div>
-              <div class="info-value">${order.campaign_title}</div>
-              <div class="info-label">Organizer:</div>
-              <div class="info-value">${order.organizer_name}</div>
-              <div class="info-label">Order Date:</div>
-              <div class="info-value">${new Date(order.created_at).toLocaleDateString()}</div>
-            </div>
-          </div>
-
-          <div class="section">
-            <h2>Pack Details</h2>
-            <div class="info-grid">
-              <div class="info-label">Pack Type:</div>
-              <div class="info-value"><span class="pack-type">${order.pack_type}</span></div>
-              <div class="info-label">Payment Status:</div>
-              <div class="info-value" style="color: ${order.payment_status === 'completed' ? 'green' : 'orange'}; font-weight: bold;">
-                ${order.payment_status.toUpperCase()}
-              </div>
-              ${order.paid_at ? `
-                <div class="info-label">Paid On:</div>
-                <div class="info-value">${new Date(order.paid_at).toLocaleDateString()}</div>
-              ` : ''}
-            </div>
-          </div>
-
-          <div class="section">
-            <h2>T-Shirt Sizes</h2>
-            <div style="padding: 10px; background: #f9f9f9; border-radius: 5px;">
-              ${tshirtsList}
-            </div>
-          </div>
-
-          <div class="section">
-            <h2>Shipping Address</h2>
-            <div class="address-box">
-              <div style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
-                ${order.shipping_address.name}
-              </div>
-              <div>${order.shipping_address.address_line_1}</div>
-              ${order.shipping_address.address_line_2 ? `<div>${order.shipping_address.address_line_2}</div>` : ''}
-              <div>${order.shipping_address.city}, ${order.shipping_address.county}</div>
-              <div style="font-weight: bold; margin-top: 5px;">${order.shipping_address.eircode}</div>
-              <div>${order.shipping_address.country}</div>
-              <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
-                <strong>Phone:</strong> ${order.mobile_number}
-              </div>
-            </div>
-          </div>
-
-          <div class="section">
-            <h2>Tracking Information</h2>
-            <div class="tracking-box">
-              ${order.tracking_number
-                ? `<strong>Tracking Number:</strong> ${order.tracking_number}`
-                : '<em>Tracking number not yet assigned</em>'}
-            </div>
-          </div>
-
-          <div class="section" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd;">
-            <div class="info-grid">
-              <div class="info-label">Packed By:</div>
-              <div class="info-value">_____________________</div>
-              <div class="info-label">Date:</div>
-              <div class="info-value">_____________________</div>
-              <div class="info-label">Checked By:</div>
-              <div class="info-value">_____________________</div>
-            </div>
-          </div>
-
-          <div class="no-print" style="margin-top: 30px; text-align: center;">
-            <button onclick="window.print()" style="padding: 10px 30px; font-size: 16px; cursor: pointer;">
-              Print Packing List
-            </button>
-            <button onclick="window.close()" style="padding: 10px 30px; font-size: 16px; cursor: pointer; margin-left: 10px;">
-              Close
-            </button>
-          </div>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('Please allow popups for this site to print packing lists. Or try using the print button in your browser menu.');
-      return;
-    }
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-
-    printWindow.onload = () => {
-      printWindow.focus();
-    };
+    setPrintOrder(order);
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const getStatusBadge = (status: string) => {
@@ -650,6 +475,148 @@ export default function PackManagement() {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {printOrder && (
+            <div className="print-only fixed inset-0 bg-white z-[9999]">
+              <style>
+                {`
+                  @media print {
+                    body * {
+                      visibility: hidden;
+                    }
+                    .print-only, .print-only * {
+                      visibility: visible;
+                    }
+                    .print-only {
+                      position: absolute;
+                      left: 0;
+                      top: 0;
+                      width: 100%;
+                    }
+                    .no-print {
+                      display: none !important;
+                    }
+                  }
+                  @media screen {
+                    .print-only {
+                      display: none;
+                    }
+                  }
+                `}
+              </style>
+              <div className="p-8 max-w-4xl mx-auto">
+                <div className="border-b-4 border-black pb-6 mb-8">
+                  <h1 className="text-4xl font-bold">PACKING LIST</h1>
+                  <p className="text-gray-600 mt-2">Order ID: {printOrder.id}</p>
+                </div>
+
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Campaign Information</h2>
+                  <div className="grid grid-cols-[150px_1fr] gap-2">
+                    <div className="font-bold text-gray-700">Campaign:</div>
+                    <div>{printOrder.campaign_title}</div>
+                    <div className="font-bold text-gray-700">Organizer:</div>
+                    <div>{printOrder.organizer_name}</div>
+                    <div className="font-bold text-gray-700">Order Date:</div>
+                    <div>{new Date(printOrder.created_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Pack Details</h2>
+                  <div className="grid grid-cols-[150px_1fr] gap-2">
+                    <div className="font-bold text-gray-700">Pack Type:</div>
+                    <div>
+                      <span className="inline-block px-4 py-1 bg-gray-200 rounded font-bold uppercase">
+                        {printOrder.pack_type}
+                      </span>
+                    </div>
+                    <div className="font-bold text-gray-700">Payment Status:</div>
+                    <div className="font-bold" style={{ color: printOrder.payment_status === 'completed' ? 'green' : 'orange' }}>
+                      {printOrder.payment_status.toUpperCase()}
+                    </div>
+                    {printOrder.paid_at && (
+                      <>
+                        <div className="font-bold text-gray-700">Paid On:</div>
+                        <div>{new Date(printOrder.paid_at).toLocaleDateString()}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">T-Shirt Sizes</h2>
+                  <div className="bg-gray-100 p-4 rounded">
+                    {printOrder.tshirt_sizes ? (
+                      <div>
+                        {Object.entries(printOrder.tshirt_sizes)
+                          .filter(([_, size]) => size)
+                          .map(([key, size]) => (
+                            <div key={key}>{key.replace('shirt_', 'T-Shirt ')}: {size}</div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div>No t-shirts ordered</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Shipping Address</h2>
+                  <div className="border-2 border-black p-4 bg-gray-50">
+                    <div className="font-bold text-lg mb-2">{printOrder.shipping_address.name}</div>
+                    <div>{printOrder.shipping_address.address_line_1}</div>
+                    {printOrder.shipping_address.address_line_2 && (
+                      <div>{printOrder.shipping_address.address_line_2}</div>
+                    )}
+                    <div>{printOrder.shipping_address.city}, {printOrder.shipping_address.county}</div>
+                    <div className="font-bold mt-1">{printOrder.shipping_address.eircode}</div>
+                    <div>{printOrder.shipping_address.country}</div>
+                    <div className="mt-3 pt-3 border-t border-gray-300">
+                      <strong>Phone:</strong> {printOrder.mobile_number}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-8">
+                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Tracking Information</h2>
+                  <div className="border-2 border-dashed border-gray-600 p-4 min-h-[60px]">
+                    {printOrder.tracking_number ? (
+                      <div><strong>Tracking Number:</strong> {printOrder.tracking_number}</div>
+                    ) : (
+                      <div className="italic text-gray-600">Tracking number not yet assigned</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-12 pt-6 border-t border-gray-300">
+                  <div className="grid grid-cols-[150px_1fr] gap-2">
+                    <div className="font-bold text-gray-700">Packed By:</div>
+                    <div>_____________________</div>
+                    <div className="font-bold text-gray-700">Date:</div>
+                    <div>_____________________</div>
+                    <div className="font-bold text-gray-700">Checked By:</div>
+                    <div>_____________________</div>
+                  </div>
+                </div>
+
+                <div className="no-print mt-8 text-center space-x-4">
+                  <button
+                    onClick={() => window.print()}
+                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
+                  >
+                    Print
+                  </button>
+                  <button
+                    onClick={() => setPrintOrder(null)}
+                    className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
