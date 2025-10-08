@@ -72,7 +72,7 @@ export default function PackManagement() {
         .from('pack_orders')
         .select(`
           *,
-          campaigns!inner(title, organizer)
+          campaigns!pack_orders_campaign_id_fkey(title, organizer)
         `)
         .order('created_at', { ascending: false });
 
