@@ -233,7 +233,9 @@ export default function PackManagement() {
   const deletePackContent = async (id: string) => {
     try {
       console.warn('🟢 DELETE FUNCTION CALLED with id:', id);
-      console.warn('🟢 Current packContents state:', packContents);
+      console.warn('🟢 Current packContents state has', packContents.length, 'items');
+      console.warn('🟢 All IDs in state:', packContents.map(c => c.id));
+      console.warn('🟢 Does ID exist in state?', packContents.some(c => c.id === id));
 
       const { data: { user } } = await supabase.auth.getUser();
       console.warn('🟢 Current user:', user?.id);
@@ -250,6 +252,10 @@ export default function PackManagement() {
       if (error) {
         console.error('🟢 Delete error:', error);
         throw error;
+      }
+
+      if (!data || data.length === 0) {
+        console.error('🟢 WARNING: No rows were deleted. The item does not exist in the database!');
       }
 
       console.warn('🟢 Reloading pack contents from database...');
