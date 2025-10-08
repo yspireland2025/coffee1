@@ -30,43 +30,28 @@ class AuthService {
   private currentUser: User | null = null;
   private authStateListeners: ((user: User | null) => void)[] = [];
 
-  private initialized = false;
-
   constructor() {
-    this.initializeAuth().catch(error => {
-      console.error('Auth initialization error:', error);
-    });
+    this.initializeAuth();
   }
 
   private async initializeAuth() {
-    if (this.initialized) return;
-    this.initialized = true;
-
-    try {
-      // Get initial session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        this.currentUser = this.formatUser(session.user);
-        this.notifyAuthStateChange(this.currentUser);
-      }
-    } catch (error) {
-      console.error('Error getting initial session:', error);
+    // Get initial session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      this.currentUser = this.formatUser(session.user);
+      this.notifyAuthStateChange(this.currentUser);
     }
 
     // Listen for auth changes
-    try {
-      supabase.auth.onAuthStateChange((event, session) => {
-        if (session?.user) {
-          this.currentUser = this.formatUser(session.user);
-          this.notifyAuthStateChange(this.currentUser);
-        } else {
-          this.currentUser = null;
-          this.notifyAuthStateChange(null);
-        }
-      });
-    } catch (error) {
-      console.error('Error setting up auth state listener:', error);
-    }
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        this.currentUser = this.formatUser(session.user);
+        this.notifyAuthStateChange(this.currentUser);
+      } else {
+        this.currentUser = null;
+        this.notifyAuthStateChange(null);
+      }
+    });
   }
 
   private formatUser(userData: any): User {

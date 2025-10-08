@@ -104,19 +104,13 @@ export default function CampaignMap({
   centerLng = -6.2603,
   zoom = 7
 }: CampaignMapProps) {
-  console.log('[CampaignMap] ===== COMPONENT RENDER =====');
-  console.log('[CampaignMap] Props - campaigns:', campaigns.length, 'center:', centerLat, centerLng, 'zoom:', zoom);
-
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('[CampaignMap] State - isLoading:', isLoading, 'error:', error, 'mapRef.current:', !!mapRef.current);
-
   useEffect(() => {
-    console.log('[CampaignMap] ===== EFFECT TRIGGERED =====');
     console.log('[CampaignMap] Starting map initialization');
     console.log('[CampaignMap] Center:', centerLat, centerLng, 'Zoom:', zoom);
     console.log('[CampaignMap] Campaigns count:', campaigns.length);
