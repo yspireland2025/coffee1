@@ -22,7 +22,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 
 export default function App() {
   console.log('=== APP COMPONENT STARTING ===');
-  
+
   const { campaigns, loading, error } = useCampaigns();
   const { user, resetSessionTimer } = useAuth();
   const { adminUser, adminLogin, adminLogout, isAdmin } = useAdmin();
