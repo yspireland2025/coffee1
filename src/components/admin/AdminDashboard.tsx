@@ -9,8 +9,11 @@ import CampaignManagement from './CampaignManagement';
 import UserManagement from './UserManagement';
 import DonationManagement from './DonationManagement';
 import SystemSettings from './SystemSettings';
+import PackManagement from './PackManagement';
 import ChangePasswordModal from './ChangePasswordModal';
 import { useAdmin } from '../../hooks/useAdmin';
+
+type AdminView = 'dashboard' | 'campaigns' | 'users' | 'donations' | 'packs' | 'settings';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -32,6 +35,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     { id: 'campaigns', label: 'Campaigns', icon: Coffee },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'donations', label: 'Donations', icon: DollarSign },
+    { id: 'packs', label: 'Pack Management', icon: Package },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -45,6 +49,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         return <UserManagement />;
       case 'donations':
         return <DonationManagement />;
+      case 'packs':
+        return <PackManagement />;
       case 'settings':
         return <SystemSettings />;
       default:
@@ -160,6 +166,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                 {currentView === 'campaigns' && 'Manage coffee morning campaigns'}
                 {currentView === 'users' && 'Manage user accounts and permissions'}
                 {currentView === 'donations' && 'Track and manage donations'}
+                {currentView === 'packs' && 'Manage pack orders and shipping'}
                 {currentView === 'settings' && 'Configure system settings'}
               </p>
             </div>
