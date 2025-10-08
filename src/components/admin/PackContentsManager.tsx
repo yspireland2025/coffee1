@@ -216,13 +216,13 @@ export default function PackContentsManager({
                             </button>
                             <button
                               onClick={async () => {
-                                console.log('🔴 DELETE BUTTON CLICKED - Item ID:', item.id);
+                                console.warn('🔴 DELETE BUTTON CLICKED - Item ID:', item.id);
                                 if (window.confirm('Are you sure you want to delete this item?')) {
-                                  console.log('🔴 USER CONFIRMED DELETE');
+                                  console.warn('🔴 USER CONFIRMED DELETE');
                                   await onDeleteContent(item.id);
-                                  console.log('🔴 DELETE COMPLETED');
+                                  console.warn('🔴 DELETE COMPLETED');
                                 } else {
-                                  console.log('🔴 USER CANCELLED DELETE');
+                                  console.warn('🔴 USER CANCELLED DELETE');
                                 }
                               }}
                               className="bg-red-100 text-red-700 p-2 rounded-lg hover:bg-red-200 transition-colors"
