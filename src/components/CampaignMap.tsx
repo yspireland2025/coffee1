@@ -277,7 +277,7 @@ export default function CampaignMap({
     return () => {
       delete (window as any).viewCampaignDetails;
     };
-  }, [campaigns, onCampaignClick]);
+  }, [campaigns, onCampaignClick, isScriptLoaded]);
 
   if (error) {
     return (
