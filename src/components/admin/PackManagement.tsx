@@ -40,7 +40,7 @@ export default function PackManagement() {
   const [packOrders, setPackOrders] = useState<PackOrder[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<PackOrder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('completed');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<PackOrder | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [editingTracking, setEditingTracking] = useState<string | null>(null);
