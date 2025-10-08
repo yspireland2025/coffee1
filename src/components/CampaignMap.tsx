@@ -107,19 +107,11 @@ export default function CampaignMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('[CampaignMap] Starting map initialization');
-    console.log('[CampaignMap] Center:', centerLat, centerLng, 'Zoom:', zoom);
-    console.log('[CampaignMap] Campaigns count:', campaigns.length);
-
-    if (mapInstanceRef.current) {
-      console.log('[CampaignMap] Map already initialized, skipping');
-      return;
-    }
-
+    console.log('[CampaignMap] Loading Google Maps script');
     let isMounted = true;
 
     getGoogleMapsApiKey()
@@ -133,32 +125,11 @@ export default function CampaignMap({
       })
       .then(() => {
         if (!isMounted) {
-          console.log('[CampaignMap] Component unmounted, aborting map creation');
+          console.log('[CampaignMap] Component unmounted, aborting after script load');
           return;
         }
-        console.log('[CampaignMap] Script loaded, initializing map...');
-        if (!mapRef.current) {
-          console.error('[CampaignMap] Map ref is null!');
-          return;
-        }
-
-        if (mapInstanceRef.current) {
-          console.log('[CampaignMap] Map already created during async operation, skipping');
-          return;
-        }
-
-        console.log('[CampaignMap] Creating map instance...');
-        const map = new google.maps.Map(mapRef.current, {
-          center: { lat: centerLat, lng: centerLng },
-          zoom: zoom,
-          mapTypeControl: true,
-          streetViewControl: false,
-          fullscreenControl: true,
-        });
-
-        mapInstanceRef.current = map;
-        console.log('[CampaignMap] Map created successfully');
-        setIsLoading(false);
+        console.log('[CampaignMap] Script loaded successfully');
+        setIsScriptLoaded(true);
       })
       .catch((err) => {
         if (!isMounted) {
@@ -166,19 +137,44 @@ export default function CampaignMap({
           return;
         }
         console.error('[CampaignMap] Error loading Google Maps:', err);
-        console.error('[CampaignMap] Error stack:', err.stack);
         setError(`Failed to load map: ${err.message}`);
-        setIsLoading(false);
       });
 
     return () => {
-      console.log('[CampaignMap] Component unmounting, cancelling map initialization');
+      console.log('[CampaignMap] Component unmounting during script load');
       isMounted = false;
     };
   }, []);
 
   useEffect(() => {
-    if (!mapInstanceRef.current || isLoading) return;
+    if (!isScriptLoaded || mapInstanceRef.current) return;
+
+    console.log('[CampaignMap] Script ready, checking for map ref...');
+    if (!mapRef.current) {
+      console.error('[CampaignMap] Map ref is null even though script is loaded!');
+      return;
+    }
+
+    console.log('[CampaignMap] Creating map instance...');
+    try {
+      const map = new google.maps.Map(mapRef.current, {
+        center: { lat: centerLat, lng: centerLng },
+        zoom: zoom,
+        mapTypeControl: true,
+        streetViewControl: false,
+        fullscreenControl: true,
+      });
+
+      mapInstanceRef.current = map;
+      console.log('[CampaignMap] Map created successfully');
+    } catch (err) {
+      console.error('[CampaignMap] Error creating map:', err);
+      setError(`Failed to create map: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  }, [isScriptLoaded, centerLat, centerLng, zoom]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
 
     markersRef.current.forEach(marker => marker.setMap(null));
     markersRef.current = [];
@@ -259,7 +255,7 @@ export default function CampaignMap({
     return () => {
       delete (window as any).viewCampaignDetails;
     };
-  }, [campaigns, isLoading, onCampaignClick]);
+  }, [campaigns, onCampaignClick]);
 
   if (error) {
     return (
@@ -272,20 +268,18 @@ export default function CampaignMap({
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative">
-      <div ref={mapRef} className="h-[600px] rounded-lg overflow-hidden shadow-lg" />
+      <div ref={mapRef} className="h-[600px] rounded-lg overflow-hidden shadow-lg">
+        {!isScriptLoaded && (
+          <div className="flex items-center justify-center h-full bg-gray-100">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading map...</p>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="absolute bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg border border-gray-200 z-10">
         <h4 className="font-semibold text-sm mb-2">Campaign Progress</h4>
