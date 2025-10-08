@@ -36,6 +36,14 @@ interface PackOrder {
   organizer_name: string;
 }
 
+interface PackContent {
+  id: string;
+  pack_type: 'free' | 'medium' | 'large';
+  item_name: string;
+  quantity: number;
+  display_order: number;
+}
+
 export default function PackManagement() {
   const [packOrders, setPackOrders] = useState<PackOrder[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<PackOrder[]>([]);
@@ -47,9 +55,11 @@ export default function PackManagement() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [loading, setLoading] = useState(true);
   const [printOrder, setPrintOrder] = useState<PackOrder | null>(null);
+  const [packContents, setPackContents] = useState<PackContent[]>([]);
 
   useEffect(() => {
     loadPackOrders();
+    loadPackContents();
 
     const subscription = supabase
       .channel('pack_orders_management')
@@ -104,6 +114,22 @@ export default function PackManagement() {
       setFilteredOrders([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPackContents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pack_contents')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      setPackContents(data || []);
+    } catch (error) {
+      console.error('Error loading pack contents:', error);
+      setPackContents([]);
     }
   };
 
@@ -549,21 +575,49 @@ export default function PackManagement() {
                 </div>
 
                 <div className="mb-8">
-                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">T-Shirt Sizes</h2>
+                  <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Pack Contents</h2>
                   <div className="bg-gray-100 p-4 rounded">
-                    {printOrder.tshirt_sizes ? (
-                      <div>
-                        {Object.entries(printOrder.tshirt_sizes)
-                          .filter(([_, size]) => size)
-                          .map(([key, size]) => (
-                            <div key={key}>{key.replace('shirt_', 'T-Shirt ')}: {size}</div>
-                          ))}
-                      </div>
+                    {packContents.filter(c => c.pack_type === printOrder.pack_type).length > 0 ? (
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-300">
+                            <th className="text-left py-2">Item</th>
+                            <th className="text-right py-2">Quantity</th>
+                            <th className="text-right py-2">Packed</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {packContents
+                            .filter(c => c.pack_type === printOrder.pack_type)
+                            .map((item) => (
+                              <tr key={item.id} className="border-b border-gray-200">
+                                <td className="py-2">{item.item_name}</td>
+                                <td className="text-right py-2">{item.quantity}</td>
+                                <td className="text-right py-2">☐</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
                     ) : (
-                      <div>No t-shirts ordered</div>
+                      <div>No pack contents defined</div>
                     )}
                   </div>
                 </div>
+
+                {printOrder.tshirt_sizes && Object.values(printOrder.tshirt_sizes).some(size => size) && (
+                  <div className="mb-8">
+                    <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">T-Shirt Sizes Ordered</h2>
+                    <div className="bg-blue-50 p-4 rounded border-2 border-blue-300">
+                      <div className="space-y-1">
+                        {Object.entries(printOrder.tshirt_sizes)
+                          .filter(([_, size]) => size)
+                          .map(([key, size]) => (
+                            <div key={key} className="font-medium">{key.replace('shirt_', 'T-Shirt ')}: {size}</div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-8">
                   <h2 className="text-xl font-bold mb-4 pb-2 border-b border-gray-300">Shipping Address</h2>
