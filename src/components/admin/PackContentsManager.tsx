@@ -215,7 +215,11 @@ export default function PackContentsManager({
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => onDeleteContent(item.id)}
+                              onClick={async () => {
+                                if (window.confirm('Are you sure you want to delete this item?')) {
+                                  await onDeleteContent(item.id);
+                                }
+                              }}
                               className="bg-red-100 text-red-700 p-2 rounded-lg hover:bg-red-200 transition-colors"
                               title="Delete"
                             >

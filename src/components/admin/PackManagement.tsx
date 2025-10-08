@@ -225,20 +225,21 @@ export default function PackManagement() {
   };
 
   const deletePackContent = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-
     try {
       const { error } = await supabase
         .from('pack_contents')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       await loadPackContents();
     } catch (error) {
       console.error('Error deleting pack content:', error);
-      alert('Failed to delete pack content');
+      alert('Failed to delete pack content: ' + (error as Error).message);
     }
   };
 
