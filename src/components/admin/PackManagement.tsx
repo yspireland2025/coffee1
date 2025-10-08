@@ -226,17 +226,27 @@ export default function PackManagement() {
 
   const deletePackContent = async (id: string) => {
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete pack content with id:', id);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user?.id);
+
+      const { data, error } = await supabase
         .from('pack_contents')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
+
+      console.log('Delete response - data:', data, 'error:', error);
 
       if (error) {
         console.error('Delete error:', error);
         throw error;
       }
 
+      console.log('Successfully deleted, reloading pack contents...');
       await loadPackContents();
+      console.log('Pack contents reloaded');
     } catch (error) {
       console.error('Error deleting pack content:', error);
       alert('Failed to delete pack content: ' + (error as Error).message);
