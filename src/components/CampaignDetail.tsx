@@ -1,9 +1,10 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, Share2, Facebook, Twitter, Instagram, MessageCircle, X, Users, Target, Mail } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Calendar, MapPin, Clock, Share2, Facebook, Twitter, Instagram, MessageCircle, X, Users, Target, Mail, Link as LinkIcon, Download, Copy, Check } from 'lucide-react';
 import { Campaign } from '../types';
 import { supabase } from '../lib/supabase';
 import MessageHostModal from './MessageHostModal';
+import QRCode from 'qrcode';
 
 interface CampaignDetailProps {
   campaign: Campaign;
@@ -16,9 +17,33 @@ export default function CampaignDetail({ campaign, onClose, onDonate, isPage = f
   const [actualRaisedAmount, setActualRaisedAmount] = useState(campaign.raisedAmount);
   const [loading, setLoading] = useState(true);
   const [showMessageHost, setShowMessageHost] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const progressPercentage = (actualRaisedAmount / campaign.goalAmount) * 100;
-  
+  const campaignUrl = `${window.location.origin}/campaign/${campaign.id}`;
+
+  useEffect(() => {
+    const generateQRCode = async () => {
+      try {
+        const url = await QRCode.toDataURL(campaignUrl, {
+          width: 300,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        setQrCodeUrl(url);
+      } catch (error) {
+        console.error('Error generating QR code:', error);
+      }
+    };
+
+    generateQRCode();
+  }, [campaignUrl]);
+
   useEffect(() => {
     const calculateActualRaised = async () => {
       try {
@@ -85,7 +110,6 @@ export default function CampaignDetail({ campaign, onClose, onDonate, isPage = f
   };
 
   const handleShare = (platform?: string) => {
-    const campaignUrl = `${window.location.origin}/campaign/${campaign.id}`;
     const shareData = {
       title: campaign.title,
       text: `Support ${campaign.organizer}'s coffee morning for Youth Suicide Prevention Ireland`,
@@ -98,6 +122,25 @@ export default function CampaignDetail({ campaign, onClose, onDonate, isPage = f
       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(shareData.url)}`);
     } else if (navigator.share) {
       navigator.share(shareData);
+    }
+  };
+
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(campaignUrl);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+    }
+  };
+
+  const handleDownloadQR = () => {
+    if (qrCodeUrl) {
+      const link = document.createElement('a');
+      link.download = `${campaign.title.replace(/[^a-z0-9]/gi, '_')}_QR_Code.png`;
+      link.href = qrCodeUrl;
+      link.click();
     }
   };
 
@@ -291,6 +334,52 @@ export default function CampaignDetail({ campaign, onClose, onDonate, isPage = f
 
                 <div className="border-t border-green-200 pt-4">
                   <h3 className="font-medium text-gray-900 mb-3">Share this campaign</h3>
+
+                  {/* Campaign URL */}
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <LinkIcon className="h-4 w-4 text-gray-600" />
+                      <span className="text-xs font-medium text-gray-700">Campaign URL</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={campaignUrl}
+                        readOnly
+                        className="flex-1 text-xs bg-white border border-gray-300 rounded px-2 py-1.5 text-gray-700"
+                      />
+                      <button
+                        onClick={handleCopyUrl}
+                        className="bg-green-600 text-white p-1.5 rounded hover:bg-green-700 transition-colors"
+                        title="Copy URL"
+                      >
+                        {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* QR Code */}
+                  {qrCodeUrl && (
+                    <div className="mb-4">
+                      <div className="bg-white border-2 border-gray-200 rounded-lg p-3 text-center">
+                        <img
+                          src={qrCodeUrl}
+                          alt="Campaign QR Code"
+                          className="mx-auto mb-2"
+                          style={{ width: '150px', height: '150px' }}
+                        />
+                        <button
+                          onClick={handleDownloadQR}
+                          className="text-xs bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 transition-colors flex items-center justify-center space-x-1 mx-auto"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Download QR Code</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Social Share Buttons */}
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleShare('facebook')}
