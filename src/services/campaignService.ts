@@ -1,6 +1,19 @@
 import { supabase } from '../lib/supabase';
 
 export const campaignService = {
+  async getCampaignById(campaignId: string) {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('id', campaignId)
+      .eq('is_approved', true)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   async createCampaign(campaignData: any, userId?: string) {
     console.log('campaignService.createCampaign called with:', campaignData);
 

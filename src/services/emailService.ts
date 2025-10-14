@@ -552,7 +552,10 @@ class EmailService {
     campaignTitle: string;
     organizerName: string;
     donationId: string;
+    campaignId: string;
   }): Promise<{ success: boolean; error?: string }> {
+    const campaignUrl = `${window.location.origin}/campaign/${donationData.campaignId}`;
+
     return this.sendEmail(donationData.donorEmail, 'donation_receipt', {
       donor_name: donationData.donorName,
       donation_amount: donationData.amount.toFixed(2),
@@ -560,7 +563,7 @@ class EmailService {
       organizer_name: donationData.organizerName,
       donation_date: new Date().toLocaleDateString(),
       donation_id: donationData.donationId,
-      campaign_url: `${window.location.origin}/#campaign-${donationData.donationId}`
+      campaign_url: campaignUrl
     });
   }
 
@@ -573,14 +576,16 @@ class EmailService {
     eventLocation: string;
     campaignId: string;
   }): Promise<{ success: boolean; error?: string }> {
+    const campaignUrl = `${window.location.origin}/campaign/${campaignData.campaignId}`;
+
     return this.sendEmail(campaignData.organizerEmail, 'campaign_approved', {
       organizer_name: campaignData.organizerName,
       campaign_title: campaignData.campaignTitle,
       goal_amount: campaignData.goalAmount.toLocaleString(),
       event_date: new Date(campaignData.eventDate).toLocaleDateString(),
       event_location: campaignData.eventLocation,
-      campaign_url: `${window.location.origin}/#campaign-${campaignData.campaignId}`,
-      share_url: `${window.location.origin}/#campaign-${campaignData.campaignId}`
+      campaign_url: campaignUrl,
+      share_url: campaignUrl
     });
   }
 

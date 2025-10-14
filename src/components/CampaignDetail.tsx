@@ -9,9 +9,10 @@ interface CampaignDetailProps {
   campaign: Campaign;
   onClose: () => void;
   onDonate: (campaign: Campaign) => void;
+  isPage?: boolean;
 }
 
-export default function CampaignDetail({ campaign, onClose, onDonate }: CampaignDetailProps) {
+export default function CampaignDetail({ campaign, onClose, onDonate, isPage = false }: CampaignDetailProps) {
   const [actualRaisedAmount, setActualRaisedAmount] = useState(campaign.raisedAmount);
   const [loading, setLoading] = useState(true);
   const [showMessageHost, setShowMessageHost] = useState(false);
@@ -84,10 +85,11 @@ export default function CampaignDetail({ campaign, onClose, onDonate }: Campaign
   };
 
   const handleShare = (platform?: string) => {
+    const campaignUrl = `${window.location.origin}/campaign/${campaign.id}`;
     const shareData = {
       title: campaign.title,
       text: `Support ${campaign.organizer}'s coffee morning for Youth Suicide Prevention Ireland`,
-      url: window.location.href
+      url: campaignUrl
     };
 
     if (platform === 'facebook') {
@@ -99,21 +101,31 @@ export default function CampaignDetail({ campaign, onClose, onDonate }: Campaign
     }
   };
 
+  const containerClass = isPage
+    ? "bg-white"
+    : "fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4";
+
+  const contentClass = isPage
+    ? "max-w-4xl mx-auto"
+    : "bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto";
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className={containerClass}>
+      <div className={contentClass}>
         <div className="relative">
           <img
             src={campaign.image}
             alt={campaign.title}
             className="w-full h-64 lg:h-80 object-cover"
           />
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
-          >
-            <X className="h-6 w-6 text-gray-700" />
-          </button>
+          {!isPage && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+            >
+              <X className="h-6 w-6 text-gray-700" />
+            </button>
+          )}
           <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur-sm p-4 rounded-2xl">
             <div className="flex items-center space-x-4">
               <div className="bg-green-100 p-3 rounded-full">
