@@ -11,7 +11,29 @@ export const campaignService = {
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      campaign_number: data.campaign_number,
+      title: data.title,
+      organizer: data.organizer,
+      story: data.story,
+      goalAmount: data.goal_amount,
+      raisedAmount: data.raised_amount || 0,
+      eventDate: data.event_date,
+      eventTime: data.event_time,
+      location: data.location,
+      eircode: data.eircode,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      image: data.image,
+      socialLinks: typeof data.social_links === 'string' ? JSON.parse(data.social_links) : (data.social_links || {}),
+      createdAt: data.created_at,
+      isActive: data.is_active,
+      isApproved: data.is_approved
+    };
   },
 
   async getCampaignById(campaignId: string) {
