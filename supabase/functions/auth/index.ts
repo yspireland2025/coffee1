@@ -3,7 +3,7 @@ import { hash, compare } from 'npm:bcryptjs'
 import { create, getNumericDate } from 'https://deno.land/x/djwt@v2.0/mod.ts'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
