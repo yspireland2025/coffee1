@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Coffee } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
+import { useCampaigns } from './hooks/useCampaigns';
 import { useAdmin } from './hooks/useAdmin';
 import { campaignService } from './services/campaignService';
 import { Campaign } from './types';
@@ -21,6 +22,7 @@ export default function AppRouter() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, resetSessionTimer } = useAuth();
+  const { campaigns } = useCampaigns();
   const { adminUser, adminLogin, adminLogout, isAdmin } = useAdmin();
 
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
@@ -144,7 +146,7 @@ export default function AppRouter() {
           path="/campaigns"
           element={
             <CampaignsPage
-              campaigns={[]}
+              campaigns={campaigns}
               onBack={() => navigate('/')}
             />
           }
