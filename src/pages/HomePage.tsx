@@ -19,7 +19,7 @@ export default function HomePage({ onCreateCampaign, onDonate }: HomePageProps) 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const handleViewCampaign = (campaign: Campaign) => {
-    navigate(`/campaign/${campaign.id}`);
+    navigate(`/campaign/${campaign.campaign_number}`);
   };
 
   return (

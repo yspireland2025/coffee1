@@ -22,7 +22,7 @@ export default function CampaignDetail({ campaign, onClose, onDonate, isPage = f
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   
   const progressPercentage = (actualRaisedAmount / campaign.goalAmount) * 100;
-  const campaignUrl = `${window.location.origin}/campaign/${campaign.id}`;
+  const campaignUrl = `${window.location.origin}/campaign/${campaign.campaign_number}`;
 
   useEffect(() => {
     const generateQRCode = async () => {

@@ -1,6 +1,19 @@
 import { supabase } from '../lib/supabase';
 
 export const campaignService = {
+  async getCampaignByNumber(campaignNumber: string | number) {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('campaign_number', campaignNumber)
+      .eq('is_approved', true)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   async getCampaignById(campaignId: string) {
     const { data, error } = await supabase
       .from('campaigns')

@@ -19,14 +19,14 @@ export default function CampaignPage({ onDonate }: CampaignPageProps) {
   useEffect(() => {
     const loadCampaign = async () => {
       if (!id) {
-        setError('Campaign ID is missing');
+        setError('Campaign number is missing');
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const data = await campaignService.getCampaignById(id);
+        const data = await campaignService.getCampaignByNumber(id);
 
         if (data) {
           setCampaign(data);

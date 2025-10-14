@@ -553,8 +553,9 @@ class EmailService {
     organizerName: string;
     donationId: string;
     campaignId: string;
+    campaignNumber: number;
   }): Promise<{ success: boolean; error?: string }> {
-    const campaignUrl = `${window.location.origin}/campaign/${donationData.campaignId}`;
+    const campaignUrl = `${window.location.origin}/campaign/${donationData.campaignNumber}`;
 
     return this.sendEmail(donationData.donorEmail, 'donation_receipt', {
       donor_name: donationData.donorName,
@@ -575,8 +576,9 @@ class EmailService {
     eventDate: string;
     eventLocation: string;
     campaignId: string;
+    campaignNumber: number;
   }): Promise<{ success: boolean; error?: string }> {
-    const campaignUrl = `${window.location.origin}/campaign/${campaignData.campaignId}`;
+    const campaignUrl = `${window.location.origin}/campaign/${campaignData.campaignNumber}`;
 
     return this.sendEmail(campaignData.organizerEmail, 'campaign_approved', {
       organizer_name: campaignData.organizerName,

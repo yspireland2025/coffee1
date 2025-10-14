@@ -25,11 +25,12 @@ export function useCampaigns() {
 
       const formattedCampaigns: Campaign[] = data.map((campaign: any) => ({
         id: campaign.id.toString(),
+        campaign_number: campaign.campaign_number,
         title: campaign.title,
         organizer: campaign.organizer,
         story: campaign.story,
         goalAmount: campaign.goal_amount,
-        raisedAmount: campaign.raised_amount || 0, // Use the real calculated amount from donations
+        raisedAmount: campaign.raised_amount || 0,
         eventDate: campaign.event_date,
         eventTime: campaign.event_time,
         location: campaign.location,

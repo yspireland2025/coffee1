@@ -1,5 +1,6 @@
 export interface Campaign {
   id: string;
+  campaign_number: number;
   title: string;
   organizer: string;
   story: string;
