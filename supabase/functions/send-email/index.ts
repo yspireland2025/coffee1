@@ -88,29 +88,27 @@ Deno.serve(async (req) => {
       const transporter = nodemailer.createTransport({
         host: smtpHost,
         port: parseInt(smtpPort),
-        secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
+        secure: parseInt(smtpPort) === 465,
         auth: {
           user: smtpUser,
           pass: smtpPassword,
         },
         tls: {
-          rejectUnauthorized: false // Allow self-signed certificates
+          rejectUnauthorized: false
         }
       });
 
       console.log('SMTP transporter created, verifying connection...');
       
-      // Verify SMTP connection
       await transporter.verify();
       console.log('SMTP connection verified successfully');
 
-      // Send email
       const mailOptions = {
         from: `"${smtpFromName || 'YSPI Coffee Morning'}" <${smtpFromEmail}>`,
         to: emailRequest.to,
         subject: emailRequest.subject,
         html: emailRequest.html,
-        text: emailRequest.text || emailRequest.html.replace(/<[^>]*>/g, '') // Strip HTML for text version
+        text: emailRequest.text || emailRequest.html.replace(/<[^>]*>/g, '')
       };
 
       console.log('Sending email with options:', {
@@ -137,7 +135,6 @@ Deno.serve(async (req) => {
     } catch (smtpError) {
       console.error('SMTP sending error:', smtpError);
       
-      // If SMTP fails, fall back to simulation
       console.log('SMTP failed, falling back to simulation');
       
       return new Response(
