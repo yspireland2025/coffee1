@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
       templateType: emailRequest.templateType
     });
 
-    // Validate email request
     if (!emailRequest.to || !emailRequest.subject || !emailRequest.html) {
       return new Response(
         JSON.stringify({ error: 'Missing required email fields (to, subject, html)' }),
@@ -39,7 +38,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get SMTP configuration from environment
     const smtpHost = Deno.env.get('SMTP_HOST');
     const smtpPort = Deno.env.get('SMTP_PORT');
     const smtpUser = Deno.env.get('SMTP_USER');
@@ -59,7 +57,6 @@ Deno.serve(async (req) => {
       fromEmail: smtpFromEmail
     });
 
-    // Check if SMTP is configured
     if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || !smtpFromEmail) {
       console.log('SMTP not fully configured, simulating email send');
       
@@ -74,17 +71,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // SMTP is configured, attempt to send real email
     try {
       console.log('Attempting to send email via SMTP...');
 
-      // Import nodemailer for SMTP
       const nodemailerModule = await import('npm:nodemailer@6.9.8');
       const nodemailer = nodemailerModule.default || nodemailerModule;
 
-      console.log('Nodemailer imported:', typeof nodemailer, typeof nodemailer.createTransport);
+      console.log('Nodemailer module:', Object.keys(nodemailer));
 
-      // Create transporter
       const transporter = nodemailer.createTransport({
         host: smtpHost,
         port: parseInt(smtpPort),
@@ -114,8 +108,7 @@ Deno.serve(async (req) => {
       console.log('Sending email with options:', {
         from: mailOptions.from,
         to: mailOptions.to,
-        subject: mailOptions.subject,
-        hasHtml: !!mailOptions.html
+        subject: mailOptions.subject
       });
 
       const info = await transporter.sendMail(mailOptions);
@@ -134,7 +127,6 @@ Deno.serve(async (req) => {
 
     } catch (smtpError) {
       console.error('SMTP sending error:', smtpError);
-      
       console.log('SMTP failed, falling back to simulation');
       
       return new Response(
