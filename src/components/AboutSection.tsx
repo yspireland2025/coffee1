@@ -5,8 +5,8 @@ export default function AboutSection() {
   const stats = [
     { icon: Users, value: '15,000+', label: 'Young people reached' },
     { icon: Target, value: '€450K+', label: 'Funds raised in 2024' },
-    { icon: Heart, value: '200+', label: 'Coffee mornings hosted' },
-    { icon: Award, value: '12', label: 'Counties active' }
+    { icon: Heart, value: '35', label: 'Coffee mornings already hosted' },
+    { icon: Award, value: '8', label: 'Counties covered' }
   ];
 
   return (
