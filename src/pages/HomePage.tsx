@@ -144,15 +144,15 @@ export default function HomePage({ onCreateCampaign, onDonate }: HomePageProps) 
             {[
               {
                 question: "How much does it cost to get a Coffee Morning starter pack?",
-                answer: "The starter pack is completely free! We only ask for a €10 contribution towards postage costs to get your pack delivered to your door. This includes everything you need: planning guides, promotional materials, information leaflets, and donation collection materials."
+                answer: "The basic starter pack is completely free! We only ask for a €10 contribution towards postage costs to get your pack delivered to your door. This includes everything you need: planning guides, promotional materials, information leaflets, and donation collection materials. Other packs are available in larger sizes but would incur a small cost."
               },
               {
                 question: "How long does it take for my campaign to be approved?",
-                answer: "Once you've completed your pack payment, your campaign will be reviewed within 24-48 hours. We review each campaign to ensure it meets our guidelines and represents YSPI's mission appropriately. You'll receive an email notification once your campaign is approved and goes live."
+                answer: "Once you've completed your pack payment, your campaign will be reviewed within 24-48 hours. We review each campaign to ensure it meets our guidelines and represents YSPI appropriately. You'll receive an email notification once your campaign is approved and goes live."
               },
               {
                 question: "What support do I get when hosting a coffee morning?",
-                answer: "You'll receive comprehensive support including a detailed planning guide, promotional materials, social media templates, and direct access to our support team. We're here to help you every step of the way, from initial planning to post-event follow-up."
+                answer: "You'll receive comprehensive support including a detailed planning guide, promotional materials such as posters and invite cards; party supports including plates, cutlery, balloons etc.  You will also be able to get assistance from our support team. We're here to help you every step of the way, from initial planning to post-event follow-up."
               },
               {
                 question: "How are donations processed and where does the money go?",
