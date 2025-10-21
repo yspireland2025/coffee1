@@ -71,7 +71,7 @@ export default function Hero({ onCreateCampaign }: HeroProps) {
               Get together with friends and family and do something amazing by helping someone in need.
 Host your own Let&apos;s Talk Coffee Morning and help save young lives. Your Let&apos;s Talk Coffee Morning will make such a difference to young people living with mental health issues or in crisis.</p>
             <p className="text-xl text-gray-700 mb-8 leading-relaxed">
-              With our helpful starter pack it has never been easier to setup a Let's Talk Coffee Morning. Packs are free, we just ask for a contribution towards the cost of postage (€10).
+              With our helpful starter pack it has never been easier to setup a Let's Talk Coffee Morning. Starter Packs are free, we just ask for a contribution towards the cost of postage (€10).  Larger packs are also available for a small fee. Full details are available at registration.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
