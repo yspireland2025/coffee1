@@ -269,22 +269,54 @@ export default function CampaignManagement() {
 
     const overrideApprove = async () => {
       try {
-        const { error } = await supabase
+        console.log('Attempting to override and approve campaign:', campaignId);
+
+        const { data, error } = await supabase
           .from('campaigns')
           .update({
             is_approved: true,
             pack_payment_status: 'completed'
           })
-          .eq('id', campaignId);
+          .eq('id', campaignId)
+          .select();
 
-        if (error) throw error;
+        console.log('Update result:', { data, error });
 
-        // Update local state
-        setAllCampaigns(prev => prev.map(campaign =>
-          campaign.id === campaignId
-            ? { ...campaign, is_approved: true, pack_payment_status: 'completed' }
-            : campaign
-        ));
+        if (error) {
+          console.error('Database error:', error);
+          throw error;
+        }
+
+        // Reload campaigns from database to ensure we have the latest data
+        const { data: updatedCampaigns, error: fetchError } = await supabase
+          .from('campaigns')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (fetchError) {
+          console.error('Error reloading campaigns:', fetchError);
+        } else if (updatedCampaigns) {
+          const adminCampaigns: Campaign[] = updatedCampaigns.map(campaign => ({
+            id: campaign.id,
+            title: campaign.title,
+            organizer: campaign.organizer,
+            email: campaign.email,
+            county: campaign.county,
+            goal_amount: campaign.goal_amount,
+            raised_amount: Math.round(campaign.raised_amount / 100),
+            event_date: campaign.event_date,
+            event_time: campaign.event_time,
+            location: campaign.location,
+            is_approved: campaign.is_approved,
+            is_active: campaign.is_active,
+            created_at: campaign.created_at,
+            story: campaign.story,
+            pack_payment_status: campaign.pack_payment_status,
+            campaign_number: campaign.campaign_number
+          }));
+          setAllCampaigns(adminCampaigns);
+          setFilteredCampaigns(adminCampaigns);
+        }
 
         // Send approval email to campaign organizer
         const approvedCampaign = allCampaigns.find(c => c.id === campaignId);
@@ -320,15 +352,16 @@ export default function CampaignManagement() {
         }, 5000);
       } catch (error) {
         console.error('Error overriding and approving campaign:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         const errorToast = document.createElement('div');
-        errorToast.className = 'fixed top-4 right-4 bg-red-100 border border-red-200 text-red-800 px-6 py-3 rounded-lg shadow-lg z-50';
-        errorToast.innerHTML = '❌ Failed to override and approve campaign. Please try again.';
+        errorToast.className = 'fixed top-4 right-4 bg-red-100 border border-red-200 text-red-800 px-6 py-3 rounded-lg shadow-lg z-50 max-w-md';
+        errorToast.innerHTML = `❌ Failed to override and approve campaign: ${errorMessage}`;
         document.body.appendChild(errorToast);
         setTimeout(() => {
           if (document.body.contains(errorToast)) {
             document.body.removeChild(errorToast);
           }
-        }, 3000);
+        }, 5000);
       }
     };
 
