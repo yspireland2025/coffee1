@@ -52,9 +52,21 @@ export default function Header({ onCreateCampaign, showMyCampaigns, setShowMyCam
             >
               Browse All Campaigns
             </button>
-            <a href="#about" className="text-gray-700 hover:text-green-700 transition-colors">
+            <button
+              onClick={() => {
+                resetSessionTimer();
+                navigate('/');
+                setTimeout(() => {
+                  const element = document.getElementById('about');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }, 100);
+              }}
+              className="text-gray-700 hover:text-green-700 transition-colors"
+            >
               About YSPI
-            </a>
+            </button>
             <a 
               href="https://ineedhelp.ie" 
               target="_blank" 
@@ -154,9 +166,22 @@ export default function Header({ onCreateCampaign, showMyCampaigns, setShowMyCam
               >
                 Browse All Campaigns
               </button>
-              <a href="#about" className="text-gray-700 hover:text-green-700 transition-colors">
+              <button
+                onClick={() => {
+                  resetSessionTimer();
+                  navigate('/');
+                  setIsMenuOpen(false);
+                  setTimeout(() => {
+                    const element = document.getElementById('about');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }, 100);
+                }}
+                className="text-gray-700 hover:text-green-700 transition-colors text-left w-full"
+              >
                 About YSPI
-              </a>
+              </button>
               <a 
                 href="https://ineedhelp.ie" 
                 target="_blank" 
