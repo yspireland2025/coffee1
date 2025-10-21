@@ -182,7 +182,7 @@ export default function AppRouter() {
               <ul className="space-y-2 text-sm text-gray-300">
                 <li><a href="/#about" className="hover:text-white transition-colors">About YSPI</a></li>
                 <li><a href="/#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><button onClick={() => navigate('/campaigns')} className="hover:text-white transition-colors">Browse Campaigns</button></li>
+                <li><button onClick={() => navigate('/campaigns')} className="hover:text-white transition-colors text-left">Browse Campaigns</button></li>
                 <li><a href="https://ineedhelp.ie" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Crisis Information</a></li>
               </ul>
             </div>
