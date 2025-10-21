@@ -284,7 +284,7 @@ export default function HomePage({ onCreateCampaign, onDonate }: HomePageProps) 
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-white mb-4">Our Impact Across Ireland</h2>
             <p className="text-xl text-white/90 max-w-3xl mx-auto">
-              See how YSPI is making a difference in communities nationwide
+              See how Youth Suicide Prevention Ireland is making a difference in communities nationwide
             </p>
           </div>
 
@@ -303,7 +303,7 @@ export default function HomePage({ onCreateCampaign, onDonate }: HomePageProps) 
                 <Coffee className="h-10 w-10 text-white" />
               </div>
               <p className="text-4xl font-bold text-[#009ca3] mb-2">1,486</p>
-              <p className="text-[#009ca3] text-lg font-semibold">Schools Reached</p>
+              <p className="text-[#009ca3] text-lg font-semibold">Schools Resource Packs Distributed</p>
               <p className="text-[#009ca3]/70 text-sm mt-2">Mental health packs sent to secondary schools</p>
             </div>
 
