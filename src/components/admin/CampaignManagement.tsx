@@ -178,7 +178,8 @@ export default function CampaignManagement() {
             goalAmount: approvedCampaign.goal_amount,
             eventDate: approvedCampaign.event_date,
             eventLocation: approvedCampaign.location,
-            campaignId: approvedCampaign.id
+            campaignId: approvedCampaign.id,
+            campaignNumber: approvedCampaign.campaign_number
           });
           
           if (emailResult.success) {

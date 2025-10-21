@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { emailService } from './emailService';
 
 export interface User {
   id: string;
@@ -118,6 +119,20 @@ class AuthService {
         console.log('AuthService: Supabase auth user created successfully');
 
         this.currentUser = this.formatUser(data.user);
+
+        // Send welcome email
+        console.log('Sending welcome email to:', email);
+        const emailResult = await emailService.sendWelcomeEmail({
+          email,
+          name: fullName
+        });
+
+        if (emailResult.success) {
+          console.log('Welcome email sent successfully');
+        } else {
+          console.error('Failed to send welcome email:', emailResult.error);
+        }
+
         return { user: this.currentUser };
       }
 
