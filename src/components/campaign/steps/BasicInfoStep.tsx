@@ -46,7 +46,7 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           <FileText className="inline h-4 w-4 mr-1" />
-          Your Story *
+          About your Coffee Morning *
         </label>
         <textarea
           required
@@ -54,10 +54,10 @@ export default function BasicInfoStep({ formData, setFormData, user }: BasicInfo
           value={formData.story}
           onChange={(e) => setFormData({ ...formData, story: e.target.value })}
           className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          placeholder="Share why you're hosting this coffee morning and how it connects to YSPI's mission..."
+          placeholder="Share why you're hosting this coffee morning"
         />
         <p className="text-sm text-gray-500 mt-1">
-          Tell people why this cause matters to you. Personal stories create stronger connections.
+          You could tell people why this cause matters to you. Personal stories create stronger connections.
         </p>
       </div>
 
