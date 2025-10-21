@@ -2,6 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Coffee, Users, Target, Heart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import heroCoffeeImage from '../assets/hero-coffee.webp';
 
 interface HeroProps {
   onCreateCampaign: () => void;
@@ -113,8 +114,8 @@ Host your own Let&apos;s Talk Coffee Morning and help save young lives. Your Let
           <div className="relative">
             <div className="aspect-square bg-gradient-to-br from-amber-100 to-green-100 rounded-3xl overflow-hidden shadow-2xl">
               <img
-                src="https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=800"
-                alt="Group of friends having coffee in a cozy home setting"
+                src={heroCoffeeImage}
+                alt="Group of friends having coffee morning for charity"
                 className="w-full h-full object-cover"
               />
             </div>
