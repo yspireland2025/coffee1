@@ -1,5 +1,6 @@
 import React from 'react';
 import { Coffee, Heart, Menu, X, User, LogOut, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 interface HeaderProps {
@@ -12,6 +13,7 @@ export default function Header({ onCreateCampaign, showMyCampaigns, setShowMyCam
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const { user, signOut, resetSessionTimer } = useAuth();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,8 +45,8 @@ export default function Header({ onCreateCampaign, showMyCampaigns, setShowMyCam
           <nav className="hidden md:flex items-center space-x-8">
             <button
               onClick={() => {
-                const event = new CustomEvent('showCampaignsPage');
-                window.dispatchEvent(event);
+                resetSessionTimer();
+                navigate('/campaigns');
               }}
               className="text-gray-700 hover:text-green-700 transition-colors"
             >
@@ -144,8 +146,9 @@ export default function Header({ onCreateCampaign, showMyCampaigns, setShowMyCam
             <nav className="flex flex-col space-y-4">
               <button
                 onClick={() => {
-                  const event = new CustomEvent('showCampaignsPage');
-                  window.dispatchEvent(event);
+                  resetSessionTimer();
+                  navigate('/campaigns');
+                  setIsMenuOpen(false);
                 }}
                 className="text-gray-700 hover:text-green-700 transition-colors text-left w-full"
               >
