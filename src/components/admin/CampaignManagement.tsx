@@ -24,6 +24,8 @@ interface Campaign {
   is_active: boolean;
   created_at: string;
   story: string;
+  pack_payment_status?: string;
+  campaign_number?: number;
 }
 
 export default function CampaignManagement() {
@@ -258,6 +260,79 @@ export default function CampaignManagement() {
     };
 
     rejectCampaign();
+  };
+
+  const handleOverrideAndApprove = (campaignId: string) => {
+    if (!confirm('Are you sure you want to override the payment requirement and approve this campaign? This will mark it as approved without requiring pack payment completion.')) {
+      return;
+    }
+
+    const overrideApprove = async () => {
+      try {
+        const { error } = await supabase
+          .from('campaigns')
+          .update({
+            is_approved: true,
+            pack_payment_status: 'completed'
+          })
+          .eq('id', campaignId);
+
+        if (error) throw error;
+
+        // Update local state
+        setAllCampaigns(prev => prev.map(campaign =>
+          campaign.id === campaignId
+            ? { ...campaign, is_approved: true, pack_payment_status: 'completed' }
+            : campaign
+        ));
+
+        // Send approval email to campaign organizer
+        const approvedCampaign = allCampaigns.find(c => c.id === campaignId);
+        if (approvedCampaign) {
+          console.log('Sending campaign approval email after override...');
+          const emailResult = await emailService.sendCampaignApproval({
+            organizerEmail: approvedCampaign.email,
+            organizerName: approvedCampaign.organizer,
+            campaignTitle: approvedCampaign.title,
+            goalAmount: approvedCampaign.goal_amount,
+            eventDate: approvedCampaign.event_date,
+            eventLocation: approvedCampaign.location,
+            campaignId: approvedCampaign.id,
+            campaignNumber: approvedCampaign.campaign_number || 0
+          });
+
+          if (emailResult.success) {
+            console.log('Campaign approval email sent successfully');
+          } else {
+            console.error('Failed to send campaign approval email:', emailResult.error);
+          }
+        }
+
+        // Show success toast
+        const successToast = document.createElement('div');
+        successToast.className = 'fixed top-4 right-4 bg-green-100 border border-green-200 text-green-800 px-6 py-3 rounded-lg shadow-lg z-50';
+        successToast.innerHTML = '✅ Campaign approved successfully (payment requirement overridden)! It will now appear on the public website.';
+        document.body.appendChild(successToast);
+        setTimeout(() => {
+          if (document.body.contains(successToast)) {
+            document.body.removeChild(successToast);
+          }
+        }, 5000);
+      } catch (error) {
+        console.error('Error overriding and approving campaign:', error);
+        const errorToast = document.createElement('div');
+        errorToast.className = 'fixed top-4 right-4 bg-red-100 border border-red-200 text-red-800 px-6 py-3 rounded-lg shadow-lg z-50';
+        errorToast.innerHTML = '❌ Failed to override and approve campaign. Please try again.';
+        document.body.appendChild(errorToast);
+        setTimeout(() => {
+          if (document.body.contains(errorToast)) {
+            document.body.removeChild(errorToast);
+          }
+        }, 3000);
+      }
+    };
+
+    overrideApprove();
   };
 
   const handleDeactivate = (campaignId: string) => {
@@ -543,10 +618,14 @@ export default function CampaignManagement() {
                           </button>
                             </>
                           ) : (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-500 italic" title="Cannot approve until pack payment is completed">
-                                Awaiting payment
-                              </span>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => handleOverrideAndApprove(campaign.id)}
+                                className="bg-amber-100 text-amber-700 p-1.5 sm:p-2 rounded-lg hover:bg-amber-200 transition-colors text-xs whitespace-nowrap"
+                                title="Override payment requirement and approve campaign"
+                              >
+                                Override & Approve
+                              </button>
                               <button
                                 onClick={() => handleSendPaymentLink(campaign)}
                                 disabled={sendingPaymentLink === campaign.id}
