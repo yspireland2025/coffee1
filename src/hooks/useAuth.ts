@@ -160,9 +160,15 @@ export function useAuth() {
       console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
       console.log('Redirect URL:', `${window.location.origin}/#reset-password`);
 
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 30000)
+      );
+
+      const resetPromise = supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/#reset-password`,
       });
+
+      const { data, error } = await Promise.race([resetPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error('Supabase password reset error:', error);
@@ -182,6 +188,14 @@ export function useAuth() {
       return { error: null };
     } catch (error: any) {
       console.error('Password reset exception:', error);
+
+      if (error.message === 'Request timeout') {
+        return {
+          error: {
+            message: 'The request took too long. This is a known issue with the authentication service. Please try again or contact support.'
+          }
+        };
+      }
 
       if (error.name === 'AuthRetryableFetchError' || error.message?.includes('fetch')) {
         return {

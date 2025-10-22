@@ -39,16 +39,24 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     setError('');
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 30000)
+      );
+
+      const resetPromise = supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/#admin`
       });
-      
-      if (error) throw error;
-      
+
+      const result = await Promise.race([resetPromise, timeoutPromise]) as any;
+
+      if (result.error) throw result.error;
+
       setResetSuccess(true);
     } catch (err: any) {
       console.error('Password reset error:', err);
-      if (err.message?.includes('email rate limit exceeded')) {
+      if (err.message === 'Request timeout') {
+        setError('The request took too long. This is a known issue with the authentication service. Please try again or contact support.');
+      } else if (err.message?.includes('email rate limit exceeded')) {
         setError('Too many password reset attempts. Please wait 5-10 minutes before trying again.');
       } else {
         setError(err.message || 'Failed to send reset email');
