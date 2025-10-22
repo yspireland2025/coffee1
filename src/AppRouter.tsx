@@ -18,6 +18,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import HomePage from './pages/HomePage';
 import CampaignPage from './pages/CampaignPage';
 import CampaignsPage from './components/CampaignsPage';
+import EmailTestPage from './pages/EmailTestPage';
 
 export default function AppRouter() {
   const navigate = useNavigate();
@@ -154,6 +155,10 @@ export default function AppRouter() {
               onBack={() => navigate('/')}
             />
           }
+        />
+        <Route
+          path="/email-test"
+          element={<EmailTestPage />}
         />
       </Routes>
 
