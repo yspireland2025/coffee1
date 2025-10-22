@@ -418,16 +418,36 @@ export default function CampaignManagement() {
   };
 
   const handleSendPaymentLink = async (campaign: Campaign) => {
-    if (!campaign.pack_order_id) {
-      alert('No pack order found for this campaign');
-      return;
-    }
-
     setSendingPaymentLink(campaign.id);
 
     try {
+      // First, find the pack order for this campaign
+      console.log('Searching for pack order with campaign_id:', campaign.id);
+
+      const { data: packOrders, error: fetchError } = await supabase
+        .from('pack_orders')
+        .select('id')
+        .eq('campaign_id', campaign.id)
+        .maybeSingle();
+
+      console.log('Pack order query result:', { packOrders, fetchError });
+
+      if (fetchError) {
+        console.error('Error fetching pack order:', fetchError);
+        throw new Error('Failed to fetch pack order');
+      }
+
+      if (!packOrders) {
+        console.warn('No pack order found for campaign:', campaign.id);
+        alert('No pack order found for this campaign. The organizer may not have completed the pack selection step.');
+        setSendingPaymentLink(null);
+        return;
+      }
+
+      console.log('Found pack order:', packOrders.id);
+
       const result = await packOrderService.createPaymentLink({
-        packOrderId: campaign.pack_order_id,
+        packOrderId: packOrders.id,
         campaignTitle: campaign.title,
         organizerName: campaign.organizer,
         organizerEmail: campaign.email,
