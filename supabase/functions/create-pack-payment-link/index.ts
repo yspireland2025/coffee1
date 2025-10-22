@@ -2,8 +2,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 }
 
 interface PackPaymentRequest {
@@ -18,14 +18,23 @@ interface PackPaymentRequest {
 
 Deno.serve(async (req) => {
   console.log('Pack payment link function called with method:', req.method);
-  
+  console.log('Request URL:', req.url);
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('Reading request body...');
+    const requestBody: PackPaymentRequest = await req.json();
+    console.log('Request body parsed:', {
+      packOrderId: requestBody.packOrderId,
+      campaignTitle: requestBody.campaignTitle,
+      hasEmail: !!requestBody.organizerEmail
+    });
+
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-    
+
     if (!stripeSecretKey) {
       console.error('STRIPE_SECRET_KEY not found in environment');
       return new Response(
@@ -37,9 +46,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const requestBody: PackPaymentRequest = await req.json();
     const { packOrderId, campaignTitle, organizerName, organizerEmail, amount, packType, sendEmail } = requestBody;
-
     console.log('Creating pack payment link for:', { packOrderId, campaignTitle, organizerName, amount, packType });
 
     // Initialize Supabase to get pack order details

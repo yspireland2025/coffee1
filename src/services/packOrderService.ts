@@ -291,8 +291,24 @@ class PackOrderService {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create payment link');
+        let errorMessage = 'Failed to create payment link';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Response is not JSON, try to get text
+          const errorText = await response.text();
+          errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Non-JSON response received. Content-Type:', contentType);
+        console.error('Response text:', responseText.substring(0, 500));
+        throw new Error('Invalid response from server. The edge function may not be deployed correctly.');
       }
 
       const result = await response.json();
