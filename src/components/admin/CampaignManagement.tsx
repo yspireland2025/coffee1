@@ -26,6 +26,7 @@ interface Campaign {
   story: string;
   pack_payment_status?: string;
   campaign_number?: number;
+  pack_order_id?: string;
 }
 
 export default function CampaignManagement() {
@@ -79,7 +80,10 @@ export default function CampaignManagement() {
           is_approved: campaign.is_approved,
           is_active: campaign.is_active,
           created_at: campaign.created_at,
-          story: campaign.story
+          story: campaign.story,
+          pack_payment_status: campaign.pack_payment_status,
+          campaign_number: campaign.campaign_number,
+          pack_order_id: campaign.pack_order_id
         }));
 
         console.log('CampaignManagement: Formatted campaigns for admin:', adminCampaigns);
@@ -312,7 +316,8 @@ export default function CampaignManagement() {
             created_at: campaign.created_at,
             story: campaign.story,
             pack_payment_status: campaign.pack_payment_status,
-            campaign_number: campaign.campaign_number
+            campaign_number: campaign.campaign_number,
+            pack_order_id: campaign.pack_order_id
           }));
           setAllCampaigns(adminCampaigns);
           setFilteredCampaigns(adminCampaigns);
@@ -475,6 +480,18 @@ export default function CampaignManagement() {
     return <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pending</span>;
   };
 
+  const getPaymentBadge = (campaign: Campaign) => {
+    const status = campaign.pack_payment_status || 'pending';
+
+    if (status === 'completed') {
+      return <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-medium">Paid</span>;
+    }
+    if (status === 'failed') {
+      return <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">Failed</span>;
+    }
+    return <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">Unpaid</span>;
+  };
+
   const counties = [...new Set(allCampaigns.map(c => c.county))];
 
   if (loading) {
@@ -616,7 +633,10 @@ export default function CampaignManagement() {
                     </div>
                   </td>
                   <td className="py-4 px-3 sm:px-6">
-                    {getStatusBadge(campaign)}
+                    <div className="flex flex-wrap gap-1">
+                      {getStatusBadge(campaign)}
+                      {getPaymentBadge(campaign)}
+                    </div>
                   </td>
                   <td className="py-4 px-3 sm:px-6">
                     <div className="flex items-center space-x-1 sm:space-x-2">
