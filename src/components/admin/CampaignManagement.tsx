@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Search, Filter, Eye, Edit, Trash2, CheckCircle, XCircle,
   Calendar, MapPin, DollarSign, Users, Clock, Download,
-  AlertTriangle, AlertCircle, Mail, Phone, Send
+  AlertTriangle, AlertCircle, Mail, Phone, Send, ShieldCheck
 } from 'lucide-react';
 import { useCampaigns } from '../../hooks/useCampaigns';
 import { supabase } from '../../lib/supabase';
@@ -674,10 +674,10 @@ export default function CampaignManagement() {
                             <div className="flex items-center space-x-1">
                               <button
                                 onClick={() => handleOverrideAndApprove(campaign.id)}
-                                className="bg-amber-100 text-amber-700 p-1.5 sm:p-2 rounded-lg hover:bg-amber-200 transition-colors text-xs whitespace-nowrap"
+                                className="bg-amber-100 text-amber-700 p-1.5 sm:p-2 rounded-lg hover:bg-amber-200 transition-colors"
                                 title="Override payment requirement and approve campaign"
                               >
-                                Override & Approve
+                                <ShieldCheck className="h-3 w-3 sm:h-4 sm:w-4" />
                               </button>
                               <button
                                 onClick={() => handleSendPaymentLink(campaign)}
@@ -688,7 +688,7 @@ export default function CampaignManagement() {
                                 {sendingPaymentLink === campaign.id ? (
                                   <Clock className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                                 ) : (
-                                  <Send className="h-3 w-3 sm:h-4 sm:w-4" />
+                                  <span className="text-sm font-semibold">€</span>
                                 )}
                               </button>
                             </div>
