@@ -278,8 +278,11 @@ class PackOrderService {
         throw new Error('Not authenticated');
       }
 
+      // Use the hardcoded Supabase URL from the lib
+      const supabaseUrl = 'https://cdohoaiqioakaksxkdlu.supabase.co';
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pack-payment-link`,
+        `${supabaseUrl}/functions/v1/create-pack-payment-link`,
         {
           method: 'POST',
           headers: {
@@ -290,21 +293,30 @@ class PackOrderService {
         }
       );
 
+      // Check content-type before trying to parse
+      const contentType = response.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+
       if (!response.ok) {
         let errorMessage = 'Failed to create payment link';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // Response is not JSON, try to get text
+
+        if (isJson) {
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (e) {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+        } else {
           const errorText = await response.text();
-          errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
+          console.error('Non-JSON error response:', errorText.substring(0, 500));
+          errorMessage = `HTTP ${response.status}: ${errorText.substring(0, 100) || response.statusText}`;
         }
+
         throw new Error(errorMessage);
       }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
+      if (!isJson) {
         const responseText = await response.text();
         console.error('Non-JSON response received. Content-Type:', contentType);
         console.error('Response text:', responseText.substring(0, 500));
