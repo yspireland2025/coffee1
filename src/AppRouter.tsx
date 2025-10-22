@@ -12,6 +12,7 @@ import DonationModal from './components/DonationModal';
 import AuthModal from './components/AuthModal';
 import MyCampaignsModal from './components/MyCampaignsModal';
 import CreateCampaignModal from './components/campaign/CreateCampaignModal';
+import ResetPasswordModal from './components/ResetPasswordModal';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 import HomePage from './pages/HomePage';
@@ -32,19 +33,22 @@ export default function AppRouter() {
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [showMyCampaigns, setShowMyCampaigns] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   useEffect(() => {
-    const checkAdminRoute = () => {
+    const checkRoutes = () => {
       if (window.location.hash === '#admin') {
         if (!isAdmin) {
           setShowAdminLogin(true);
         }
+      } else if (window.location.hash.startsWith('#reset-password')) {
+        setShowResetPassword(true);
       }
     };
 
-    checkAdminRoute();
-    window.addEventListener('hashchange', checkAdminRoute);
-    return () => window.removeEventListener('hashchange', checkAdminRoute);
+    checkRoutes();
+    window.addEventListener('hashchange', checkRoutes);
+    return () => window.removeEventListener('hashchange', checkRoutes);
   }, [isAdmin]);
 
   useEffect(() => {
@@ -234,6 +238,15 @@ export default function AppRouter() {
         <MyCampaignsModal
           onClose={() => setShowMyCampaigns(false)}
           onCreateCampaign={handleCreateCampaign}
+        />
+      )}
+
+      {showResetPassword && (
+        <ResetPasswordModal
+          onClose={() => {
+            setShowResetPassword(false);
+            window.location.hash = '';
+          }}
         />
       )}
     </div>

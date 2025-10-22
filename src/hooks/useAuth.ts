@@ -157,10 +157,10 @@ export function useAuth() {
   const resetPassword = async (email: string) => {
     try {
       console.log('Initiating password reset for:', email);
-      console.log('Origin:', window.location.origin);
 
-      // Try without redirectTo first to see if Supabase has a default configured
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#reset-password`,
+      });
 
       if (error) {
         console.error('Supabase password reset error:', error);
