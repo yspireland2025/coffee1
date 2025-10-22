@@ -39,28 +39,27 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     setError('');
 
     try {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 30000)
-      );
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const resetPromise = supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/#admin`
+      const response = await fetch(`${supabaseUrl}/functions/v1/request-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmail })
       });
 
-      const result = await Promise.race([resetPromise, timeoutPromise]) as any;
-
-      if (result.error) throw result.error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send reset email');
+      }
 
       setResetSuccess(true);
     } catch (err: any) {
       console.error('Password reset error:', err);
-      if (err.message === 'Request timeout') {
-        setError('The request took too long. This is a known issue with the authentication service. Please try again or contact support.');
-      } else if (err.message?.includes('email rate limit exceeded')) {
-        setError('Too many password reset attempts. Please wait 5-10 minutes before trying again.');
-      } else {
-        setError(err.message || 'Failed to send reset email');
-      }
+      setError(err.message || 'Failed to send reset email');
     } finally {
       setResetLoading(false);
     }

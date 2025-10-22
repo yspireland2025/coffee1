@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 
 interface ResetPasswordModalProps {
   onClose: () => void;
@@ -12,21 +11,18 @@ export default function ResetPasswordModal({ onClose }: ResetPasswordModalProps)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const handlePasswordReset = async () => {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const type = hashParams.get('type');
+    const hashParams = new URLSearchParams(window.location.hash.substring(window.location.hash.indexOf('?')));
+    const resetToken = hashParams.get('token');
 
-      if (type === 'recovery' && accessToken) {
-        console.log('Password reset token detected');
-      } else {
-        setError('Invalid or expired password reset link');
-      }
-    };
-
-    handlePasswordReset();
+    if (resetToken) {
+      console.log('Custom password reset token detected');
+      setToken(resetToken);
+    } else {
+      setError('Invalid or expired password reset link');
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,21 +31,42 @@ export default function ResetPasswordModal({ onClose }: ResetPasswordModalProps)
     setLoading(true);
 
     try {
+      if (!token) {
+        setError('Invalid reset token');
+        return;
+      }
+
       if (password !== confirmPassword) {
         setError('Passwords do not match');
+        setLoading(false);
         return;
       }
 
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters');
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters');
+        setLoading(false);
         return;
       }
 
-      const { error } = await supabase.auth.updateUser({
-        password: password
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          newPassword: password
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reset password');
+      }
 
       setSuccess(true);
 
@@ -120,7 +137,7 @@ export default function ResetPasswordModal({ onClose }: ResetPasswordModalProps)
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Enter new password"
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
             </div>
@@ -138,7 +155,7 @@ export default function ResetPasswordModal({ onClose }: ResetPasswordModalProps)
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Confirm new password"
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
             </div>

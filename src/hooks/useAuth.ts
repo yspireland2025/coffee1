@@ -156,56 +156,35 @@ export function useAuth() {
 
   const resetPassword = async (email: string) => {
     try {
-      console.log('Initiating password reset for:', email);
-      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
-      console.log('Redirect URL:', `${window.location.origin}/#reset-password`);
+      console.log('Initiating custom password reset for:', email);
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 30000)
-      );
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      const resetPromise = supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#reset-password`,
+      const response = await fetch(`${supabaseUrl}/functions/v1/request-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
       });
 
-      const { data, error } = await Promise.race([resetPromise, timeoutPromise]) as any;
-
-      if (error) {
-        console.error('Supabase password reset error:', error);
-
-        if (error.message?.includes('AuthRetryableFetchError')) {
-          return {
-            error: {
-              message: 'Network error. Please check your connection and try again.'
-            }
-          };
-        }
-
-        return { error };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send reset email');
       }
 
-      console.log('Password reset email sent successfully', data);
+      const result = await response.json();
+      console.log('Password reset email sent successfully:', result);
       return { error: null };
     } catch (error: any) {
       console.error('Password reset exception:', error);
-
-      if (error.message === 'Request timeout') {
-        return {
-          error: {
-            message: 'The request took too long. This is a known issue with the authentication service. Please try again or contact support.'
-          }
-        };
-      }
-
-      if (error.name === 'AuthRetryableFetchError' || error.message?.includes('fetch')) {
-        return {
-          error: {
-            message: 'Unable to connect to authentication service. Please try again later.'
-          }
-        };
-      }
-
-      return { error: error as Error };
+      return {
+        error: {
+          message: error.message || 'Failed to send reset email'
+        }
+      };
     }
   };
 
