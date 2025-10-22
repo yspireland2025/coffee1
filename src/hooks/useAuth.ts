@@ -157,20 +157,40 @@ export function useAuth() {
   const resetPassword = async (email: string) => {
     try {
       console.log('Initiating password reset for:', email);
+      console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+      console.log('Redirect URL:', `${window.location.origin}/#reset-password`);
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/#reset-password`,
       });
 
       if (error) {
         console.error('Supabase password reset error:', error);
+
+        if (error.message?.includes('AuthRetryableFetchError')) {
+          return {
+            error: {
+              message: 'Network error. Please check your connection and try again.'
+            }
+          };
+        }
+
         return { error };
       }
 
-      console.log('Password reset email sent successfully');
+      console.log('Password reset email sent successfully', data);
       return { error: null };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Password reset exception:', error);
+
+      if (error.name === 'AuthRetryableFetchError' || error.message?.includes('fetch')) {
+        return {
+          error: {
+            message: 'Unable to connect to authentication service. Please try again later.'
+          }
+        };
+      }
+
       return { error: error as Error };
     }
   };
